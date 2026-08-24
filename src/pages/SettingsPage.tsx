@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { AlertTriangle, Check, Download, Moon, RotateCcw, Sun, Upload } from 'lucide-react'
+import { AlertTriangle, Check, Download, FileSpreadsheet, Moon, RotateCcw, Sun, Upload } from 'lucide-react'
 import { Button, Modal, PageHeader } from '../components/ui'
 import { DataSafetyPanel } from '../components/DataSafetyPanel'
 import { useTracker } from '../context/useTracker'
@@ -16,6 +16,21 @@ export function SettingsPage() {
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const [resetKind, setResetKind] = useState<ResetKind | null>(null)
   const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
+  const [exportingExcel, setExportingExcel] = useState(false)
+
+  async function exportExcelTracker() {
+    setExportingExcel(true)
+    setMessage(null)
+    try {
+      const { downloadTrackerWorkbook } = await import('../lib/excel-export')
+      await downloadTrackerWorkbook(state)
+      setMessage({ tone: 'success', text: 'Excel tracker downloaded.' })
+    } catch {
+      setMessage({ tone: 'error', text: 'Could not create the Excel tracker.' })
+    } finally {
+      setExportingExcel(false)
+    }
+  }
 
   function exportBackup() {
     const blob = new Blob([serializeState(state)], { type: 'application/json' })
@@ -69,7 +84,7 @@ export function SettingsPage() {
 
         <DataSafetyPanel />
 
-        <section className="panel overflow-hidden"><header className="border-b border-[var(--border)] px-5 py-4"><h2 className="text-sm font-bold">Data</h2><p className="mt-1 text-xs text-[var(--text-muted)]">Stored locally in this browser</p></header><div className="p-5"><div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={exportBackup}><Download size={15} /> Export backup</Button><Button variant="secondary" onClick={() => inputRef.current?.click()}><Upload size={15} /> Import backup</Button><input ref={inputRef} type="file" accept="application/json,.json" className="hidden" onChange={readImport} /></div><div className="mt-6 border-t border-[var(--border)] pt-5"><h3 className="text-xs font-bold uppercase text-[var(--red)]">Reset options</h3><div className="mt-3 flex flex-wrap gap-2"><Button variant="ghost" size="sm" onClick={() => setResetKind('analytics')}>Reset analytics only</Button><Button variant="ghost" size="sm" onClick={() => setResetKind('progress')}>Reset problem progress</Button><Button variant="danger" size="sm" onClick={() => setResetKind('all')}>Reset all data</Button></div></div></div></section>
+        <section className="panel overflow-hidden"><header className="border-b border-[var(--border)] px-5 py-4"><h2 className="text-sm font-bold">Data</h2><p className="mt-1 text-xs text-[var(--text-muted)]">Stored locally in this browser</p></header><div className="p-5"><div className="flex flex-wrap gap-2"><Button onClick={exportExcelTracker} disabled={exportingExcel}><FileSpreadsheet size={15} /> {exportingExcel ? 'Creating Excel...' : 'Download Excel tracker'}</Button><Button variant="secondary" onClick={exportBackup}><Download size={15} /> Export backup</Button><Button variant="secondary" onClick={() => inputRef.current?.click()}><Upload size={15} /> Import backup</Button><input ref={inputRef} type="file" accept="application/json,.json" className="hidden" onChange={readImport} /></div><div className="mt-6 border-t border-[var(--border)] pt-5"><h3 className="text-xs font-bold uppercase text-[var(--red)]">Reset options</h3><div className="mt-3 flex flex-wrap gap-2"><Button variant="ghost" size="sm" onClick={() => setResetKind('analytics')}>Reset analytics only</Button><Button variant="ghost" size="sm" onClick={() => setResetKind('progress')}>Reset problem progress</Button><Button variant="danger" size="sm" onClick={() => setResetKind('all')}>Reset all data</Button></div></div></div></section>
       </div>
 
       <Modal open={Boolean(resetKind)} onClose={() => setResetKind(null)} title="Confirm reset"><div className="p-6"><div className="flex h-10 w-10 items-center justify-center rounded-[7px] bg-[var(--red-soft)] text-[var(--red)]"><AlertTriangle size={19} /></div><h2 className="mt-4 text-lg font-bold">Confirm data reset</h2><p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">This action cannot be undone. Export a backup first if this data may be needed later.</p><div className="mt-6 flex justify-end gap-2"><Button variant="secondary" onClick={() => setResetKind(null)}>Cancel</Button><Button variant="danger" onClick={confirmReset}>Reset data</Button></div></div></Modal>
