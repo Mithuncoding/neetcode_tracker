@@ -45,6 +45,8 @@ The visual curriculum covers:
 
 Scene frames are generated from structured algorithm state, not prerecorded videos. Completion and prediction accuracy are stored in the v3 Mentor state and exported to Excel, but they do not inflate problem mastery.
 
+Browsers without WebGL receive an accessible frame-by-frame state map with the same narration, invariants, code lens, predictions, and controls instead of an error screen.
+
 ## Installation
 
 Requirements: Node.js 22 or newer and npm.

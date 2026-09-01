@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type {
@@ -21,6 +21,20 @@ const STATE_COLORS: Record<SceneEntityState, string> = {
   done: '#70d7a5',
   muted: '#28342d',
   bad: '#ec7d7d',
+}
+
+const FALLBACK_STYLES: Record<SceneEntityState, string> = {
+  idle: 'border-white/15 bg-white/5 text-white/55',
+  active: 'border-[#4ec08c] bg-[#17392b] text-[#a4e7c5]',
+  compare: 'border-[#f0ac4f] bg-[#3a2a16] text-[#f4c778]',
+  candidate: 'border-[#72b7e7] bg-[#1d3242] text-[#a9d8fa]',
+  pivot: 'border-[#b59ada] bg-[#302842] text-[#d4c4ef]',
+  frontier: 'border-[#58aee2] bg-[#1d3242] text-[#a9d8fa]',
+  visited: 'border-[#58c493] bg-[#17392b] text-[#a4e7c5]',
+  path: 'border-[#f1c65b] bg-[#3a2a16] text-[#f4d77d]',
+  done: 'border-[#70d7a5] bg-[#17392b] text-[#b5efd0]',
+  muted: 'border-white/5 bg-white/[.025] text-white/20',
+  bad: 'border-[#ec7d7d] bg-[#422222] text-[#ffb0b0]',
 }
 
 interface EntityObject {
@@ -266,10 +280,37 @@ function disposeState(state: RendererState) {
   state.renderer.domElement.remove()
 }
 
+function canCreateWebGLContext() {
+  if (typeof document === 'undefined') return false
+  try {
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    if (!context) return false
+    context.getExtension('WEBGL_lose_context')?.loseContext()
+    return true
+  } catch {
+    return false
+  }
+}
+
+function WebGLFallback({ frame }: { frame: AlgorithmFrame }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center overflow-auto bg-[#08110c] p-5" data-render-fallback="true">
+      <div className="w-full max-w-3xl rounded-[7px] border border-white/10 bg-white/[.035] p-4">
+        <div className="flex items-center justify-between gap-3"><p className="text-[10px] font-extrabold uppercase text-[#74d6a8]">Accessible state map</p><span className="rounded-[4px] bg-white/5 px-2 py-1 text-[9px] font-bold text-white/35">WebGL unavailable</span></div>
+        <div className="mt-4 flex min-h-40 flex-wrap items-center justify-center gap-3">{frame.entities.map((entity) => <div key={entity.id} className={`flex min-h-14 min-w-14 items-center justify-center rounded-[6px] border px-3 py-2 font-mono text-xs font-bold ${FALLBACK_STYLES[entity.state]}`}>{entity.label}</div>)}</div>
+        {frame.edges.length > 0 && <div className="mt-4 flex flex-wrap justify-center gap-2 border-t border-white/10 pt-4">{frame.edges.map((sceneEdge) => <span key={sceneEdge.id} className="font-mono text-[9px] text-white/35">{sceneEdge.from.replace('node-', '')} {sceneEdge.directed ? '→' : '—'} {sceneEdge.to.replace('node-', '')}</span>)}</div>}
+        <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/45">The same playback, prediction, code, and invariant controls remain active. Enable hardware acceleration for the spatial 3D view.</p>
+      </div>
+    </div>
+  )
+}
+
 export function AlgorithmScene3D({ frame, sceneId }: { frame: AlgorithmFrame; sceneId: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<RendererState | null>(null)
   const initialFrameRef = useRef(frame)
+  const [webglAvailable] = useState(canCreateWebGLContext)
 
   useEffect(() => {
     const container = containerRef.current
@@ -380,5 +421,6 @@ export function AlgorithmScene3D({ frame, sceneId }: { frame: AlgorithmFrame; sc
     }
   }, [frame])
 
+  if (!webglAvailable) return <WebGLFallback frame={frame} />
   return <div ref={containerRef} className="h-full w-full" role="img" aria-label={`Interactive 3D view: ${frame.title}`} data-scene-id={sceneId} />
 }
