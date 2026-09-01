@@ -11,7 +11,8 @@ function finalValues(sceneId: string) {
 
 describe('3D algorithm scene definitions', () => {
   it('provides valid frames and stable entity ids for every scene', () => {
-    expect(ALGORITHM_SCENES.length).toBeGreaterThanOrEqual(37)
+    expect(ALGORITHM_SCENES.length).toBeGreaterThanOrEqual(47)
+    expect(new Set(ALGORITHM_SCENES.map((scene) => scene.id)).size).toBe(ALGORITHM_SCENES.length)
     ALGORITHM_SCENES.forEach((scene) => {
       expect(scene.frames.length).toBeGreaterThan(1)
       scene.frames.forEach((frame) => {
@@ -37,7 +38,7 @@ describe('3D algorithm scene definitions', () => {
 
   it('covers every required learning category', () => {
     expect(new Set(ALGORITHM_SCENES.map((scene) => scene.category))).toEqual(new Set([
-      'Foundations', 'Searching', 'Sorting', 'Patterns', 'Structures', 'Trees', 'Graphs', 'Recursion & DP',
+      'Foundations', 'Python Core', 'Searching', 'Sorting', 'Patterns', 'Structures', 'Trees', 'Graphs', 'Recursion & DP',
     ]))
   })
 })

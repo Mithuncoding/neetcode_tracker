@@ -6,6 +6,7 @@ import {
   Braces,
   Check,
   Circle,
+  Code2,
   Lightbulb,
   Route,
   ShieldAlert,
@@ -23,6 +24,7 @@ import {
 import { ROADMAP_PROBLEMS } from '../data/problems'
 import { getCorePattern, getPatternMastery } from '../lib/mentor'
 import { CONCEPT_LESSONS } from '../data/foundation-content'
+import { PYTHON_LESSONS } from '../data/python-course'
 
 const LAB_SCENE_BY_PATTERN: Partial<Record<CorePattern, string>> = {
   'Arrays & Hashing': 'hash-map-buckets',
@@ -120,6 +122,8 @@ export function CurriculumPage() {
   const [selectedPattern, setSelectedPattern] = useState<CorePattern | null>(selected.patterns[0] ?? null)
   const mastery = getPatternMastery(state, ROADMAP_PROBLEMS)
   const nodes = CURRICULUM.filter((node) => node.level === level)
+  const completedPythonLessons = PYTHON_LESSONS.filter((lesson) => state.mentor.pythonCourse[lesson.id]?.completedAt).length
+  const nextPythonLesson = PYTHON_LESSONS.find((lesson) => !state.mentor.pythonCourse[lesson.id]?.completedAt)
 
   const chooseLevel = (nextLevel: number) => {
     const next = CURRICULUM.find((node) => node.level === nextLevel)
@@ -137,6 +141,11 @@ export function CurriculumPage() {
   return (
     <div className="page-content">
       <PageHeader title="DSA curriculum" description="Progress by reasoning capability, not by topic count." actions={<Button variant="secondary" onClick={() => navigate('/mentor')}><ArrowLeft size={15} /> Mentor</Button>} />
+      <section className="panel mb-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-[var(--blue-soft)] text-[var(--blue)]"><Code2 size={20} /></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-bold">Python language foundation</h2><Badge tone={completedPythonLessons === PYTHON_LESSONS.length ? 'green' : 'amber'}>{completedPythonLessons}/{PYTHON_LESSONS.length} mastered</Badge></div><p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">Promotion gates require executable Python evidence before harder DSA work. Public problem counts cannot skip it.</p><ProgressBar value={completedPythonLessons / PYTHON_LESSONS.length * 100} className="mt-3 max-w-xl" /></div>
+        <Button onClick={() => navigate(nextPythonLesson ? `/mentor/python?lesson=${nextPythonLesson.id}` : '/mentor/python')}>{nextPythonLesson ? 'Continue Python' : 'Review Python'} <ArrowRight size={15} /></Button>
+      </section>
       <div className="mb-4 flex max-w-full overflow-x-auto rounded-[7px] border border-[var(--border)] bg-[var(--surface)] p-1">{LEVEL_NAMES.map((name, index) => <button key={name} type="button" onClick={() => chooseLevel(index)} className={`relative min-w-28 flex-1 rounded-[5px] px-3 py-2.5 text-xs font-bold ${level === index ? 'bg-[var(--text)] text-[var(--surface)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)]'}`}><span className="block font-mono text-[9px] opacity-60">L{index}</span>{name}{index === state.mentor.currentLevel && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />}</button>)}</div>
 
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">

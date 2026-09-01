@@ -9,6 +9,7 @@ import {
   CalendarRange,
   Check,
   ChevronRight,
+  Code2,
   Crosshair,
   ExternalLink,
   Gauge,
@@ -28,6 +29,7 @@ import {
   type CorePattern,
 } from '../data/mentor-content'
 import { ROADMAP_PROBLEMS } from '../data/problems'
+import { PYTHON_LESSONS, PYTHON_MODULES } from '../data/python-course'
 import { fetchLeetCodeProfile } from '../lib/leetcode'
 import {
   getDailyMentorMission,
@@ -111,7 +113,7 @@ function Diagnostic({ onComplete }: { onComplete: ReturnType<typeof useTracker>[
         <aside className="panel p-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-[6px] bg-[var(--text)] text-[var(--surface)]"><BrainCircuit size={20} /></div>
           <h2 className="mt-5 text-sm font-extrabold">Starting honestly</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">You already know basic Python and can solve some Easy problems. The present bottleneck is choosing and deriving an approach when the pattern is not named.</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">We make no assumptions about your Python foundation. The course starts at your first statement, then builds toward choosing and deriving an approach when the pattern is not named.</p>
           <div className="mt-5 space-y-3 border-t border-[var(--border)] pt-5 text-xs">
             <div className="flex gap-3"><Target size={15} className="mt-0.5 shrink-0 text-[var(--accent)]" /><p><strong className="text-[var(--text)]">We will measure:</strong> recognition, implementation, recall, and independence separately.</p></div>
             <div className="flex gap-3"><AlertTriangle size={15} className="mt-0.5 shrink-0 text-[var(--amber)]" /><p><strong className="text-[var(--text)]">We will not assume:</strong> one solve means mastery or a solution view means understanding.</p></div>
@@ -158,6 +160,8 @@ export function MentorPage() {
   const level = progression.activeLevel
   const levelNodes = CURRICULUM.filter((node) => node.level === level)
   const profile = state.mentor.leetcodeProfile
+  const completedPythonLessons = PYTHON_LESSONS.filter((lesson) => state.mentor.pythonCourse[lesson.id]?.completedAt).length
+  const nextPythonLesson = PYTHON_LESSONS.find((lesson) => !state.mentor.pythonCourse[lesson.id]?.completedAt)
 
   const syncProfile = async () => {
     setSyncing(true)
@@ -183,7 +187,7 @@ export function MentorPage() {
           <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-8 text-white">{LEVEL_NAMES[level]}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">Random problem volume is not the assignment. The assignment is to recognize a familiar structure, derive a defendable approach, and reproduce it later.</p>
           <div className="mt-4 flex flex-wrap gap-3 text-[10px] font-bold uppercase text-white/45"><span>Placement L{progression.placementLevel}</span><span>Evidence earned L{progression.earnedLevel}</span></div>
-          <div className="mt-6 flex flex-wrap gap-2"><Button onClick={() => navigate('/mentor/lab')}><Box size={15} /> Open 3D lab</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/curriculum')}>Curriculum <ArrowRight size={15} /></Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/medium')}>Medium trainer</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/decide')}><HelpCircle size={15} /> What should I try?</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/graph')}><Network size={15} /> Knowledge graph</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/year')}><CalendarRange size={15} /> One-year plan</Button></div>
+          <div className="mt-6 flex flex-wrap gap-2"><Button onClick={() => navigate('/mentor/python')}><Code2 size={15} /> Learn Python</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/lab')}><Box size={15} /> Open 3D lab</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/curriculum')}>Curriculum <ArrowRight size={15} /></Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/medium')}>Medium trainer</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/decide')}><HelpCircle size={15} /> What should I try?</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/graph')}><Network size={15} /> Knowledge graph</Button><Button variant="ghost" className="border-white/15 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/mentor/year')}><CalendarRange size={15} /> One-year plan</Button></div>
         </article>
 
         <article className="panel p-5">
@@ -192,6 +196,20 @@ export function MentorPage() {
           <p className="mt-3 text-xs leading-5 text-[var(--text-muted)]">{readiness.diagnosis}</p>
           <p className="mt-3 border-t border-[var(--border)] pt-3 text-[10px] text-[var(--text-faint)]">Internal training metric only. It is not a hiring or interview guarantee.</p>
         </article>
+      </section>
+
+      <section className="panel mb-4 overflow-hidden">
+        <div className="grid gap-px bg-[var(--border)] lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="bg-[var(--surface)] p-5 sm:p-6">
+            <div className="flex items-center gap-2"><Badge tone="green">Start here</Badge><span className="text-[10px] font-bold uppercase text-[var(--text-faint)]">{PYTHON_MODULES.length} modules · 10 visual worlds</span></div>
+            <div className="mt-4 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-[var(--blue-soft)] text-[var(--blue)]"><Code2 size={20} /></div><div><h2 className="text-lg font-bold">Python Zero to Interview</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">Hello World, syntax, patterns, functions, classes, objects, collections, defaultdict, map, ord, heaps, graphs, dynamic programming, and interview templates.</p></div></div>
+          </div>
+          <div className="bg-[var(--surface-raised)] p-5">
+            <div className="flex items-end justify-between gap-3"><div><p className="metric-number text-2xl font-extrabold">{completedPythonLessons}/{PYTHON_LESSONS.length}</p><p className="mt-1 text-[9px] font-bold uppercase text-[var(--text-faint)]">Executable lessons mastered</p></div><span className="metric-number text-xs font-bold text-[var(--accent)]">{Math.round(completedPythonLessons / PYTHON_LESSONS.length * 100)}%</span></div>
+            <ProgressBar value={completedPythonLessons / PYTHON_LESSONS.length * 100} className="mt-3" />
+            <Button className="mt-4 w-full" onClick={() => navigate(nextPythonLesson ? `/mentor/python?lesson=${nextPythonLesson.id}` : '/mentor/curriculum')}>{nextPythonLesson ? `Continue: ${nextPythonLesson.title}` : 'Python complete · enter DSA'} <ArrowRight size={15} /></Button>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.3fr_.7fr]">

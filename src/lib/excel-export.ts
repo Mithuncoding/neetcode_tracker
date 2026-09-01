@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs'
 import { ROADMAP_PROBLEMS } from '../data/problems'
+import { PYTHON_LESSONS, PYTHON_MODULES } from '../data/python-course'
 import { PROBLEM_STATUSES, type AppState, type ProblemStatus } from '../types'
 import { STATUS_LABELS } from './status'
 import { getTimerSeconds } from './utils'
@@ -108,7 +109,7 @@ function addSummarySheet(workbook: ExcelJS.Workbook, state: AppState, exportedAt
     { width: 12 }, { width: 12 }, { width: 12 }, { width: 14 },
   ]
   worksheet.mergeCells('A1:H1')
-  worksheet.getCell('A1').value = 'NEETCODE 250 TRACKER'
+  worksheet.getCell('A1').value = 'MITHUN DSA ACADEMY'
   worksheet.getCell('A1').font = { name: 'Aptos Display', size: 22, bold: true, color: { argb: 'FFFFFFFF' } }
   worksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: HEADER_COLOR } }
   worksheet.getCell('A1').alignment = { vertical: 'middle' }
@@ -126,6 +127,7 @@ function addSummarySheet(workbook: ExcelJS.Workbook, state: AppState, exportedAt
     return nextRevisionAt && Date.parse(nextRevisionAt) <= exportedAt.getTime()
   }).length
   const totalTime = Object.values(state.progress).reduce((sum, progress) => sum + progress.totalTimeSeconds, 0)
+  const completedPythonLessons = Object.values(state.mentor.pythonCourse).filter((lesson) => lesson.completedAt).length
   const metrics: Array<[string, ExcelJS.CellValue]> = [
     ['Total problems', ROADMAP_PROBLEMS.length],
     ['Completed', completed],
@@ -135,6 +137,8 @@ function addSummarySheet(workbook: ExcelJS.Workbook, state: AppState, exportedAt
     ['Due for revision', dueForRevision],
     ['Logged attempts', state.attempts.length],
     ['Total time', toExcelDuration(totalTime)],
+    ['Python lessons', completedPythonLessons],
+    ['3D labs', Object.keys(state.mentor.algorithmLab).length],
   ]
   metrics.forEach(([label, value], index) => {
     const labelCell = worksheet.getCell(4 + Math.floor(index / 4) * 2, 1 + (index % 4) * 2)
@@ -501,6 +505,47 @@ function addMistakeSheet(workbook: ExcelJS.Workbook, state: AppState) {
   })))
 }
 
+function addPythonCourseSheet(workbook: ExcelJS.Workbook, state: AppState) {
+  const moduleTitles = new Map(PYTHON_MODULES.map((module) => [module.id, module.title]))
+  const worksheet = addDataSheet(workbook, 'Python Course', [
+    { header: 'Order', key: 'order', width: 8 },
+    { header: 'Module', key: 'module', width: 28 },
+    { header: 'Lesson', key: 'lesson', width: 32 },
+    { header: 'Status', key: 'status', width: 18 },
+    { header: 'Challenge', key: 'challenge', width: 14 },
+    { header: 'Quiz', key: 'quiz', width: 14 },
+    { header: 'Runs', key: 'runs', width: 9 },
+    { header: 'Completed At', key: 'completedAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Concepts', key: 'concepts', width: 48 },
+    { header: 'Saved Code', key: 'lastCode', width: 72 },
+    { header: '3D Scene ID', key: 'labSceneId', width: 28 },
+    { header: 'Lesson ID', key: 'lessonId', width: 30 },
+  ], PYTHON_LESSONS.map((lesson): ExportRow => {
+    const record = state.mentor.pythonCourse[lesson.id]
+    return {
+      order: lesson.order,
+      module: moduleTitles.get(lesson.moduleId) ?? lesson.moduleId,
+      lesson: lesson.title,
+      status: record?.completedAt ? 'Mastered' : record?.runs ? 'In progress' : 'Not started',
+      challenge: record?.challengePassed ? 'Passed' : 'Pending',
+      quiz: record?.quizCorrect === true ? 'Correct' : record?.quizCorrect === false ? 'Incorrect' : 'Not attempted',
+      runs: record?.runs ?? 0,
+      completedAt: toExcelDate(record?.completedAt ?? null),
+      concepts: lesson.concepts.join(', '),
+      lastCode: record?.lastCode ?? '',
+      labSceneId: lesson.labSceneId ?? '',
+      lessonId: lesson.id,
+    }
+  }))
+  worksheet.getColumn('lastCode').alignment = { vertical: 'top', wrapText: true }
+  worksheet.getColumn('status').eachCell((cell, rowNumber) => {
+    if (rowNumber === 1) return
+    if (cell.value === 'Mastered') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: STATUS_COLORS.mastered } }
+    if (cell.value === 'In progress') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: DIFFICULTY_COLORS.Medium } }
+  })
+  return worksheet
+}
+
 function addAlgorithmLabSheet(workbook: ExcelJS.Workbook, state: AppState) {
   return addDataSheet(workbook, '3D Algorithm Lab', [
     { header: 'Scene ID', key: 'sceneId', width: 28 },
@@ -596,6 +641,7 @@ export function createTrackerWorkbook(state: AppState, exportedAt = new Date()) 
   addMentorSessionSheet(workbook, state)
   addRecognitionSheet(workbook, state)
   addMistakeSheet(workbook, state)
+  addPythonCourseSheet(workbook, state)
   addAlgorithmLabSheet(workbook, state)
   addAchievementSheet(workbook, state)
   addSettingsSheet(workbook, state, exportedAt)

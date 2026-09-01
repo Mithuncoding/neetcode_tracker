@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest'
 import { ROADMAP_PROBLEMS } from '../src/data/problems'
 import { getLevelProgression } from '../src/lib/progression'
 import { createInitialState } from '../src/lib/storage'
+import type { AppState } from '../src/types'
+
+function completePythonLessons(state: AppState, count: number) {
+  for (let index = 0; index < count; index += 1) {
+    const lessonId = `lesson-${index}`
+    state.mentor.pythonCourse[lessonId] = {
+      lessonId,
+      completedAt: '2026-09-01T00:00:00.000Z',
+      runs: 1,
+      challengePassed: true,
+      quizCorrect: true,
+      lastCode: '',
+    }
+  }
+}
 
 describe('mastery-gated level progression', () => {
   it('does not treat public LeetCode totals as earned learning levels', () => {
@@ -27,6 +42,7 @@ describe('mastery-gated level progression', () => {
   it('earns Easy implementation only from recognition and independent evidence', () => {
     const state = createInitialState()
     state.mentor.onboardingComplete = true
+    completePythonLessons(state, 24)
     const easy = ROADMAP_PROBLEMS.filter((problem) => problem.difficulty === 'Easy').slice(0, 5)
     easy.forEach((problem, index) => state.attempts.push({
       id: `attempt-${index}`,
@@ -55,6 +71,17 @@ describe('mastery-gated level progression', () => {
     expect(progression.earnedLevel).toBe(2)
     expect(progression.gates[2].progress).toBe(100)
     expect(progression.gates[3].complete).toBe(false)
+  })
+
+  it('does not let diagnostic placement bypass Python foundations', () => {
+    const state = createInitialState()
+    state.mentor.onboardingComplete = true
+    state.mentor.currentLevel = 3
+    const progression = getLevelProgression(state, ROADMAP_PROBLEMS)
+    expect(progression.placementLevel).toBe(3)
+    expect(progression.activeLevel).toBe(0)
+    completePythonLessons(state, 8)
+    expect(getLevelProgression(state, ROADMAP_PROBLEMS).activeLevel).toBe(1)
   })
 
   it('does not skip an unmet lower gate', () => {

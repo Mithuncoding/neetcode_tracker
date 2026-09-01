@@ -84,6 +84,15 @@ export interface RecordAlgorithmLabInput {
   totalPredictions: number
 }
 
+export interface RecordPythonLessonInput {
+  lessonId: string
+  code: string
+  challengePassed: boolean
+  quizCorrect: boolean | null
+  ranCode: boolean
+  complete: boolean
+}
+
 export interface TrackerContextValue {
   state: AppState
   recoveredFromBackup: boolean
@@ -115,6 +124,7 @@ export interface TrackerContextValue {
   togglePlanWeek: (week: number) => void
   setMistakeResolved: (mistakeId: string, resolved: boolean) => void
   recordAlgorithmLab: (input: RecordAlgorithmLabInput) => void
+  recordPythonLesson: (input: RecordPythonLessonInput) => void
   importState: (state: AppState) => void
   resetProgress: () => void
   resetAnalytics: () => void

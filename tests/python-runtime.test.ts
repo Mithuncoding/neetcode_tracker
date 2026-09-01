@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createPythonProgram, hasBuiltInPythonTests } from '../src/lib/python-runtime'
+import { createPythonLessonProgram, createPythonProgram, hasBuiltInPythonTests } from '../src/lib/python-runtime'
 
 describe('Python execution harness', () => {
   it('adds curated assertions to handcrafted problems', () => {
@@ -13,5 +13,12 @@ describe('Python execution harness', () => {
     const code = 'print("hello")'
     expect(createPythonProgram(code, '0217-contains-duplicate')).toBe(code)
     expect(hasBuiltInPythonTests('0217-contains-duplicate')).toBe(false)
+  })
+
+  it('wraps Python course code with executable lesson checks', () => {
+    const program = createPythonLessonProgram('answer = 42', 'assert answer == 42')
+    expect(program).toContain('answer = 42')
+    expect(program).toContain('assert answer == 42')
+    expect(program).toContain('All lesson checks passed.')
   })
 })

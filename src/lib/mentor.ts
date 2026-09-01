@@ -6,6 +6,7 @@ import type {
   SolveAttempt,
 } from '../types'
 import { CORE_PATTERNS, type CorePattern } from '../data/mentor-content'
+import { PYTHON_LESSONS } from '../data/python-course'
 import { getAdaptiveRecommendations } from './planner'
 import { getLevelProgression } from './progression'
 
@@ -332,10 +333,13 @@ export function getDailyMentorMission(state: AppState, problems: RoadmapProblem[
     ? recommendations.find(({ problem }) => problem.difficulty === 'Medium')
     : null
   const recentSolved = [...state.attempts].reverse().find((attempt) => ['independent', 'hint', 'solution'].includes(attempt.outcome))
-  const tasks: MissionTask[] = [
+  const nextPythonLesson = PYTHON_LESSONS.find((lesson) => !state.mentor.pythonCourse[lesson.id]?.completedAt)
+  const tasks: MissionTask[] = []
+  if (nextPythonLesson) tasks.push({ id: 'python', label: `Python: ${nextPythonLesson.title}`, detail: `Lesson ${nextPythonLesson.order} of ${PYTHON_LESSONS.length}. Pass its executable challenge and understanding check.`, route: `/mentor/python?lesson=${nextPythonLesson.id}` })
+  tasks.push(
     { id: 'concept', label: `Learn ${weakest.pattern}`, detail: 'Study recognition clues, then explain the invariant in your own words.', route: '/mentor/curriculum' },
     { id: 'recognition', label: 'Pattern recognition drill', detail: 'Classify five prompts before writing any code.', route: '/mentor/recognition' },
-  ]
+  )
   if (warmup) tasks.push({ id: 'warmup', label: `Guided warm-up: ${warmup.problem.title}`, detail: warmup.reason, route: `/mentor/problem/${warmup.problem.id}`, problemId: warmup.problem.id })
   if (challenge) tasks.push({ id: 'challenge', label: `Medium bridge: ${challenge.problem.title}`, detail: 'Derive brute force first; reveal only the hint level you need.', route: `/mentor/problem/${challenge.problem.id}?mode=medium-trainer`, problemId: challenge.problem.id })
   if (!challenge && progression.nextGate) tasks.push({ id: 'gate', label: `Earn Level ${progression.nextGate.level}`, detail: `Current gate progress: ${progression.nextGate.progress}%. Build Easy independence before random Mediums.`, route: '/mentor/curriculum' })

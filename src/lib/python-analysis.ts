@@ -139,3 +139,7 @@ export function explainPythonLines(code: string): PythonLineExplanation[] {
     return [{ lineNumber: index + 1, code: line, explanation }]
   })
 }
+
+export function getPythonSyntaxErrorLines(code: string) {
+  return code.trim() ? syntaxErrors(code) : []
+}

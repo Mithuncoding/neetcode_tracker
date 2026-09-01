@@ -126,6 +126,14 @@ describe('Excel tracker export', () => {
       correctPredictions: 1,
       totalPredictions: 1,
     }
+    state.mentor.pythonCourse['hello-world'] = {
+      lessonId: 'hello-world',
+      completedAt: '2026-08-24T11:30:00.000Z',
+      runs: 2,
+      challengePassed: true,
+      quizCorrect: true,
+      lastCode: 'message = "Hello, LeetCode!"\nprint(message)',
+    }
 
     const workbook = createTrackerWorkbook(state, new Date('2026-08-24T12:00:00.000Z'))
     const buffer = await workbook.xlsx.writeBuffer()
@@ -142,6 +150,7 @@ describe('Excel tracker export', () => {
       'Mentor Sessions',
       'Pattern Recognition',
       'Mistake Memory',
+      'Python Course',
       '3D Algorithm Lab',
       'Achievements',
       'Settings',
@@ -177,6 +186,12 @@ describe('Excel tracker export', () => {
 
     const recognition = loaded.getWorksheet('Pattern Recognition')
     expect(valueUnderHeading(recognition!, 2, 'Expected Pattern')).toBe('Arrays & Hashing')
+
+    const pythonCourse = loaded.getWorksheet('Python Course')
+    expect(pythonCourse!.rowCount).toBe(49)
+    expect(valueUnderHeading(pythonCourse!, 2, 'Lesson')).toBe('Hello, Python')
+    expect(valueUnderHeading(pythonCourse!, 2, 'Status')).toBe('Mastered')
+    expect(valueUnderHeading(pythonCourse!, 2, 'Runs')).toBe(2)
 
     const achievements = loaded.getWorksheet('Achievements')
     expect(valueUnderHeading(achievements!, 2, 'Status')).toBe('Unlocked')

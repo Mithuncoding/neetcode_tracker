@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Award, BarChart3, Box, BrainCircuit, BriefcaseBusiness, CalendarDays, CalendarRange, CheckCircle2, CircleDot, Clock3, Command, Focus, LayoutDashboard, ListChecks, Menu, Search, Settings, Shapes, Undo2, X } from 'lucide-react'
+import { Award, BarChart3, Box, BrainCircuit, BriefcaseBusiness, CalendarDays, CalendarRange, CheckCircle2, CircleDot, Clock3, Code2, Command, Focus, LayoutDashboard, ListChecks, Menu, Search, Settings, Shapes, Undo2, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate, type NavigateFunction } from 'react-router-dom'
 import { useTracker } from '../context/useTracker'
 import { ROADMAP_PROBLEMS } from '../data/problems'
@@ -12,6 +12,7 @@ import { useDialogFocus } from '../hooks/useDialogFocus'
 const NAVIGATION = [
   { to: '/', label: 'Today', icon: LayoutDashboard, shortcut: 'D' },
   { to: '/mentor', label: 'Mentor', icon: BrainCircuit, shortcut: 'M' },
+  { to: '/mentor/python', label: 'Python course', icon: Code2, shortcut: 'P' },
   { to: '/mentor/lab', label: '3D Lab', icon: Box, shortcut: 'V' },
   { to: '/plan', label: 'Study plan', icon: CalendarRange },
   { to: '/problems', label: 'Problems', icon: ListChecks },
@@ -29,6 +30,7 @@ export interface WorkspaceOutletContext {
 function goToShortcut(key: string, navigate: NavigateFunction) {
   if (key === 'd') navigate('/')
   if (key === 'm') navigate('/mentor')
+  if (key === 'p') navigate('/mentor/python')
   if (key === 'v') navigate('/mentor/lab')
   if (key === 'r') navigate('/revision')
   if (key === 'f') navigate('/focus')
@@ -120,7 +122,7 @@ export function AppShell() {
           { to: '/focus', label: 'Focus', icon: Focus, badge: 0 },
           { to: '/revision', label: 'Revision', icon: Clock3, badge: due },
         ].map(({ to, label, icon: Icon, badge }) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => cn('relative flex flex-col items-center justify-center gap-1 rounded-[8px] text-[9px] font-bold transition-colors active:scale-95', isActive ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]')}>{({ isActive }) => (<><span className={cn('absolute top-1.5 h-1 w-1 rounded-full bg-[var(--accent)] transition-opacity', isActive ? 'opacity-100' : 'opacity-0')} /><span className="relative"><Icon size={19} strokeWidth={1.8} />{badge > 0 && <span className="metric-number absolute -right-2.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--red)] px-1 text-[8px] font-bold text-white">{badge}</span>}</span>{label}</>)}</NavLink>)}
-        <button type="button" onClick={() => setMobileMenuOpen(true)} className="flex flex-col items-center justify-center gap-1 text-[9px] font-bold text-[var(--text-faint)] transition-colors active:scale-95"><Menu size={19} strokeWidth={1.8} />More</button>
+        <button type="button" onClick={() => setMobileMenuOpen(true)} className="flex flex-col items-center justify-center gap-1 text-[var(--text-faint)] transition-colors active:scale-95"><Menu size={19} strokeWidth={1.8} /><span className="text-[9px] font-bold leading-none">More</span></button>
       </nav>
       {searchOpen && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-start justify-center bg-black/35 px-4 pt-[10vh] backdrop-blur-[2px]" onMouseDown={(event) => event.target === event.currentTarget && setSearchOpen(false)}>

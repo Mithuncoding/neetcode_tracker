@@ -46,6 +46,7 @@ describe('state migration and recovery', () => {
     expect(migrated.mentor.yearPlanStartedAt).toBeNull()
     expect(migrated.mentor.completedPlanWeeks).toEqual([])
     expect(migrated.mentor.algorithmLab).toEqual({})
+    expect(migrated.mentor.pythonCourse).toEqual({})
     expect(migrated.achievements.some((achievement) => achievement.id === 'pattern-hunter')).toBe(true)
   })
 

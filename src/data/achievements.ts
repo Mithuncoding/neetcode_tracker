@@ -24,6 +24,9 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, 'unlockedAt'>[] = [
   { id: 'visual-first', title: 'First Visual Model', description: 'Complete your first 3D algorithm lab.' },
   { id: 'visual-10', title: 'Algorithm Cartographer', description: 'Complete 10 different 3D algorithm labs.' },
   { id: 'visual-30', title: 'Visual Systems Thinker', description: 'Complete 30 different 3D algorithm labs.' },
+  { id: 'python-first', title: 'Python First Step', description: 'Complete your first executable Python lesson.' },
+  { id: 'python-foundation', title: 'Python Foundation', description: 'Complete 24 Python lessons through core collections.' },
+  { id: 'python-interview-ready', title: 'Python Interview Toolkit', description: 'Complete all 48 Python Zero-to-Interview lessons.' },
 ]
 
 export function createAchievements(): Achievement[] {

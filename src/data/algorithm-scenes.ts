@@ -1,5 +1,6 @@
 export const ALGORITHM_CATEGORIES = [
   'Foundations',
+  'Python Core',
   'Searching',
   'Sorting',
   'Patterns',
@@ -407,6 +408,7 @@ function linearSearchScene(): AlgorithmSceneDefinition {
 
 import { EXTRA_ALGORITHM_SCENES_PART_ONE } from './algorithm-scenes-extra'
 import { ADVANCED_ALGORITHM_SCENES } from './algorithm-scenes-advanced'
+import { PYTHON_ALGORITHM_SCENES } from './algorithm-scenes-python'
 
 export const ALGORITHM_SCENES: AlgorithmSceneDefinition[] = [
   linearSearchScene(),
@@ -418,6 +420,7 @@ export const ALGORITHM_SCENES: AlgorithmSceneDefinition[] = [
   quickSortScene(),
   ...EXTRA_ALGORITHM_SCENES_PART_ONE,
   ...ADVANCED_ALGORITHM_SCENES,
+  ...PYTHON_ALGORITHM_SCENES,
 ]
 
 export const ALGORITHM_SCENE_BY_ID = new Map(ALGORITHM_SCENES.map((scene) => [scene.id, scene]))

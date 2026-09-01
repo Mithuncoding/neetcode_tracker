@@ -82,14 +82,25 @@ export function createPythonProgram(code: string, problemId: string) {
   return `${code}\n\nprint("Running built-in learning checks...")\n${tests}\nprint("All built-in checks passed.")`
 }
 
-export function runPythonCode(code: string, problemId: string, timeoutMs = 30_000) {
+export function createPythonLessonProgram(code: string, tests: string) {
+  return `${code}\n\nprint("Running lesson checks...")\n${tests}\nprint("All lesson checks passed.")`
+}
+
+function runProgram(program: string, usedBuiltInTests: boolean, timeoutMs: number) {
   return new Promise<PythonRunResult>((resolve, reject) => {
     const id = `python-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const usedBuiltInTests = hasBuiltInPythonTests(problemId)
     const timeout = window.setTimeout(() => {
       resetWorker(new Error('Python execution exceeded the time limit. The worker was stopped.'))
     }, timeoutMs)
     pending.set(id, { resolve, reject, timeout, usedBuiltInTests })
-    getWorker().postMessage({ id, code: createPythonProgram(code, problemId) })
+    getWorker().postMessage({ id, code: program })
   })
+}
+
+export function runPythonCode(code: string, problemId: string, timeoutMs = 30_000) {
+  return runProgram(createPythonProgram(code, problemId), hasBuiltInPythonTests(problemId), timeoutMs)
+}
+
+export function runPythonLessonCode(code: string, tests: string, timeoutMs = 30_000) {
+  return runProgram(createPythonLessonProgram(code, tests), true, timeoutMs)
 }

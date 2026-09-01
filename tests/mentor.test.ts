@@ -109,6 +109,7 @@ describe('mentor learning intelligence', () => {
 
   it('does not put a new learner into a random Medium mission', () => {
     const mission = getDailyMentorMission(createInitialState(), ROADMAP_PROBLEMS)
+    expect(mission[0]).toMatchObject({ id: 'python', route: '/mentor/python?lesson=hello-world' })
     expect(mission.some((task) => task.id === 'challenge')).toBe(false)
     expect(mission.some((task) => task.id === 'gate')).toBe(true)
   })

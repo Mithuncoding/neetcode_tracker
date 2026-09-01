@@ -40,6 +40,7 @@ import {
   type RecordGuidedSessionInput,
   type RecordRecognitionInput,
   type RecordAlgorithmLabInput,
+  type RecordPythonLessonInput,
 } from './tracker-context'
 import type { LeetCodeProfileSnapshot } from '../types'
 
@@ -68,6 +69,7 @@ type Action =
   | { type: 'toggle-plan-week'; week: number; now: string }
   | { type: 'set-mistake-resolved'; mistakeId: string; resolved: boolean; now: string }
   | { type: 'record-algorithm-lab'; input: RecordAlgorithmLabInput; now: string }
+  | { type: 'record-python-lesson'; input: RecordPythonLessonInput; now: string }
   | { type: 'import-state'; state: AppState }
   | { type: 'reset-progress'; now: string }
   | { type: 'reset-analytics'; now: string }
@@ -113,6 +115,7 @@ function unlockAchievements(state: AppState, now: string) {
   })
   const completedInterviews = state.interviewSessions.filter((session) => session.status === 'completed').length
   const completedAlgorithmLabs = Object.keys(state.mentor.algorithmLab).length
+  const completedPythonLessons = Object.values(state.mentor.pythonCourse).filter((lesson) => lesson.completedAt).length
   const { longest } = getStreaks(state)
   const unlocked = new Set<string>()
 
@@ -136,6 +139,9 @@ function unlockAchievements(state: AppState, now: string) {
   if (completedAlgorithmLabs >= 1) unlocked.add('visual-first')
   if (completedAlgorithmLabs >= 10) unlocked.add('visual-10')
   if (completedAlgorithmLabs >= 30) unlocked.add('visual-30')
+  if (completedPythonLessons >= 1) unlocked.add('python-first')
+  if (completedPythonLessons >= 24) unlocked.add('python-foundation')
+  if (completedPythonLessons >= 48) unlocked.add('python-interview-ready')
 
   return {
     ...state,
@@ -318,6 +324,29 @@ function reducer(state: AppState, action: Action): AppState {
             framesViewed: Math.max(previous?.framesViewed ?? 0, action.input.framesViewed),
             correctPredictions: Math.max(previous?.correctPredictions ?? 0, action.input.correctPredictions),
             totalPredictions: Math.max(previous?.totalPredictions ?? 0, action.input.totalPredictions),
+          },
+        },
+      },
+      updatedAt: action.now,
+    }
+    return unlockAchievements(nextState, action.now)
+  }
+
+  if (action.type === 'record-python-lesson') {
+    const previous = state.mentor.pythonCourse[action.input.lessonId]
+    const nextState: AppState = {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        pythonCourse: {
+          ...state.mentor.pythonCourse,
+          [action.input.lessonId]: {
+            lessonId: action.input.lessonId,
+            completedAt: previous?.completedAt ?? (action.input.complete ? action.now : null),
+            runs: (previous?.runs ?? 0) + (action.input.ranCode ? 1 : 0),
+            challengePassed: previous?.challengePassed || action.input.challengePassed,
+            quizCorrect: action.input.quizCorrect ?? previous?.quizCorrect ?? null,
+            lastCode: action.input.code,
           },
         },
       },
@@ -696,6 +725,7 @@ function reducer(state: AppState, action: Action): AppState {
         recognitionAttempts: [],
         mistakes: [],
         algorithmLab: {},
+        pythonCourse: {},
       },
       updatedAt: action.now,
     }
@@ -722,6 +752,7 @@ function reducer(state: AppState, action: Action): AppState {
         recognitionAttempts: [],
         mistakes: [],
         algorithmLab: {},
+        pythonCourse: {},
       },
       updatedAt: action.now,
     }
@@ -849,6 +880,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     togglePlanWeek: (week) => dispatch({ type: 'toggle-plan-week', week, now: now() }),
     setMistakeResolved: (mistakeId, resolved) => dispatch({ type: 'set-mistake-resolved', mistakeId, resolved, now: now() }),
     recordAlgorithmLab: (input) => dispatch({ type: 'record-algorithm-lab', input, now: now() }),
+    recordPythonLesson: (input) => dispatch({ type: 'record-python-lesson', input, now: now() }),
     importState: (nextState) => dispatch({ type: 'import-state', state: nextState }),
     resetProgress: () => dispatch({ type: 'reset-progress', now: now() }),
     resetAnalytics: () => dispatch({ type: 'reset-analytics', now: now() }),

@@ -5,7 +5,7 @@ import { TrackerProvider } from '../src/context/TrackerContext'
 import { useTracker } from '../src/context/useTracker'
 
 function MentorEvidenceHarness() {
-  const { state, completeDiagnostic, recordRecognition, recordGuidedSession, startYearPlan, togglePlanWeek, setMistakeResolved, recordAlgorithmLab } = useTracker()
+  const { state, completeDiagnostic, recordRecognition, recordGuidedSession, startYearPlan, togglePlanWeek, setMistakeResolved, recordAlgorithmLab, recordPythonLesson } = useTracker()
   return (
     <div>
       <span data-testid="onboarding">{String(state.mentor.onboardingComplete)}</span>
@@ -16,6 +16,7 @@ function MentorEvidenceHarness() {
       <span data-testid="plan-started">{String(Boolean(state.mentor.yearPlanStartedAt))}</span>
       <span data-testid="plan-weeks">{state.mentor.completedPlanWeeks.join(',')}</span>
       <span data-testid="labs">{Object.keys(state.mentor.algorithmLab).length}</span>
+      <span data-testid="python-lessons">{Object.values(state.mentor.pythonCourse).filter((lesson) => lesson.completedAt).length}</span>
       <button onClick={() => completeDiagnostic({ answers: [], recommendedLevel: 1 })}>Complete diagnostic</button>
       <button onClick={() => recordRecognition({ problemId: '0001-two-sum', selectedPattern: 'Arrays & Hashing', expectedPattern: 'Arrays & Hashing', correct: true, confidence: 4 })}>Record recognition</button>
       <button onClick={() => recordGuidedSession({
@@ -39,6 +40,7 @@ function MentorEvidenceHarness() {
       <button onClick={() => togglePlanWeek(1)}>Toggle week one</button>
       <button onClick={() => { const mistake = state.mentor.mistakes[0]; if (mistake) setMistakeResolved(mistake.id, true) }}>Resolve first mistake</button>
       <button onClick={() => recordAlgorithmLab({ sceneId: 'binary-search', framesViewed: 4, correctPredictions: 1, totalPredictions: 1 })}>Complete algorithm lab</button>
+      <button onClick={() => recordPythonLesson({ lessonId: 'hello-world', code: 'message = "Hello, LeetCode!"', challengePassed: true, quizCorrect: true, ranCode: true, complete: true })}>Complete Python lesson</button>
     </div>
   )
 }
@@ -64,5 +66,7 @@ describe('mentor evidence persistence actions', () => {
     expect(screen.getByTestId('plan-weeks')).toHaveTextContent('1')
     await user.click(screen.getByRole('button', { name: 'Complete algorithm lab' }))
     expect(screen.getByTestId('labs')).toHaveTextContent('1')
+    await user.click(screen.getByRole('button', { name: 'Complete Python lesson' }))
+    expect(screen.getByTestId('python-lessons')).toHaveTextContent('1')
   })
 })

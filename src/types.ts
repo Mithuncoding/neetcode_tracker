@@ -229,6 +229,15 @@ export interface AlgorithmLabRecord {
   totalPredictions: number
 }
 
+export interface PythonLessonRecord {
+  lessonId: string
+  completedAt: string | null
+  runs: number
+  challengePassed: boolean
+  quizCorrect: boolean | null
+  lastCode: string
+}
+
 export interface MentorState {
   displayName: string
   onboardingComplete: boolean
@@ -237,6 +246,7 @@ export interface MentorState {
   yearPlanStartedAt: string | null
   completedPlanWeeks: number[]
   algorithmLab: Record<string, AlgorithmLabRecord>
+  pythonCourse: Record<string, PythonLessonRecord>
   guidedSessions: GuidedProblemSession[]
   recognitionAttempts: PatternRecognitionAttempt[]
   mistakes: MistakeRecord[]

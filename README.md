@@ -2,7 +2,7 @@
 
 An offline-first personal DSA mentor built on the NeetCode 250 tracker. The roadmap remains the problem backbone, while the product measures pattern recognition, implementation, recall, explanation, and independent problem solving instead of treating a solved checkbox as mastery.
 
-All learning evidence stays in the browser through `localStorage`. The application has no backend, account, or runtime API dependency.
+All learning evidence stays in the browser through `localStorage`. The application has no backend, account, AI dependency, or opaque recommendation service. The first executable Python lesson downloads Pyodide; the PWA caches it for later runs.
 
 ## Mentor Mode
 
@@ -18,15 +18,32 @@ All learning evidence stays in the browser through `localStorage`. The applicati
 - **Failure memory** records or infers why an attempt failed, supports repair practice, and can be resolved or reopened.
 - **Blind re-solves** update the adaptive spaced-repetition schedule instead of being counted as new solves.
 - **Decision explorer** asks structural questions when the learner does not know what to try next.
-- **Python-first curriculum** teaches collection costs, Big-O, recursion, the Medium transition, core interview patterns, advanced combinations, and interview execution.
-- **Local Python workbench** uses a real parser, transparent static checks, and sandboxed Pyodide execution in a Web Worker with a timeout. Six handcrafted guides include curated assertions; other problems support user-written assertions.
+- **Python Zero-to-Interview Academy** provides 48 sequential executable lessons across 12 modules, starting with Hello World and building through control flow, functions, patterns, classes, objects, standard-library tools, interview data structures, generators, and algorithm templates.
+- **Local Python workbenches** use a real parser, transparent static checks, and sandboxed Pyodide execution in a Web Worker with a timeout. Course lessons require passing assertions and an understanding check; guided problems support curated or user-written assertions.
 - **Knowledge graph** links Problem → Pattern → Curriculum concept → Fine-grained taxonomy → Related problems → Mistakes → Revision.
 - **Visual learning** provides step traces for all 19 core patterns.
-- **3D Algorithm Lab** provides 37 interactive Three.js worlds with orbit controls, autoplay, speed control, frame scrubbing, invariants, code lenses, prediction checkpoints, complexity tradeoffs, and persistent completion evidence.
+- **3D Algorithm Lab** provides 47 interactive Three.js worlds, including ten Python Core worlds, with orbit controls, autoplay, speed control, frame scrubbing, invariants, code lenses, prediction checkpoints, complexity tradeoffs, and persistent completion evidence.
 - **One-year FAANG plan** tracks 52 weekly reviews alongside DSA, CS fundamentals, projects, communication, referrals, and mock interviews.
 - **Expanded interview mode** scores understanding, recognition, approach, coding, complexity, explanation, communication, and no-hint independence with at most two conceptual hints.
 
 Mentor content is deterministic and inspectable in `src/data/mentor-content.ts`; no opaque AI output is required for the learning workflow.
+
+## Python Zero to Interview
+
+Open `#/mentor/python` or press `P` from the main workspace. This course is deliberately separate from the fixed NeetCode 250 problem dataset, so language lessons never inflate problem counts.
+
+The 48 lessons cover:
+
+- **First programs:** execution order, output, comments, errors, variables, references, and f-strings
+- **Language foundations:** numeric and boolean operators, conversion, `None`, conditions, loops, functions, scope, arguments, and recursion
+- **Strings and patterns:** indexing, slicing, normalization, `ord`, `chr`, nested loops, and classic pattern printing
+- **Core collections:** lists, tuples, sets, dictionaries, comprehensions, copying, mutability, and complexity
+- **Object-oriented Python:** classes, objects, instance state, methods, `self`, dataclasses, and custom node types
+- **Iteration tools:** iterators, generators, `enumerate`, `zip`, `map`, `filter`, lambdas, sorting keys, and unpacking
+- **Interview standard library:** `defaultdict`, `Counter`, `deque`, `heapq`, `bisect`, `functools.cache`, and `itertools`
+- **DSA implementation:** arrays, linked nodes, trees, graphs, BFS, DFS, dynamic programming, and interview pattern templates
+
+Every lesson includes a worked example, editable starter code, deterministic assertions, a locked reference solution, a concept question, saved progress, and an optional direct link to its related 3D world. A lesson is mastered only after both executable checks and the understanding question pass.
 
 ## 3D Algorithm Lab
 
@@ -35,6 +52,7 @@ Open `#/mentor/lab` or press `V` from the main workspace.
 The visual curriculum covers:
 
 - **Foundations:** Big-O growth, hash-map buckets, bitwise XOR
+- **Python Core:** execution, object references, runtime types, sequences, `ord`/`chr`, control flow, call frames, iterable pipelines, collection choice, and classes/objects
 - **Searching:** linear search and binary search
 - **Sorting:** bubble, selection, insertion, merge, quick, heap, counting, radix, and Python Timsort
 - **Core patterns:** two pointers, sliding window, prefix sum, monotonic stack, and interval merging
@@ -130,7 +148,7 @@ Hash-based navigation keeps direct refreshes working on GitHub Pages without a c
 - Invalid primary data falls back through rotating snapshots and the legacy backup.
 - JSON imports are schema-validated, including Mentor evidence, and checked against the 250 known problem IDs before replacement.
 - Encrypted `.nc250` files use PBKDF2-SHA256 and AES-GCM; passphrases never leave the browser.
-- JSON, encrypted, and Excel exports include Mentor learning evidence.
+- JSON, encrypted, and Excel exports include Mentor learning evidence. Excel includes a dedicated 48-row Python Course worksheet with attempts, challenge and quiz status, saved code, and completion timestamps.
 - Export a JSON backup periodically, especially before clearing browser storage.
 
 The roadmap metadata is bundled at build time. The application never fetches problem data to provide core functionality.
@@ -153,4 +171,4 @@ For complete accepted-history coverage, Mentor includes a local reconciliation i
 
 ## Automated Tests
 
-Vitest and Testing Library cover v1/v2 migration, corruption fallback, rotating recovery, encrypted round trips, timer math, planner priority, adaptive revision intervals, full interview scoring, Mentor mastery, sequential progression, all-problem guide coverage, knowledge-graph links, reasoning/code rubrics, Python harnesses, evidence persistence, LeetCode snapshot/reconciliation validation, Excel export, undo, reset semantics, and modal keyboard behavior.
+Vitest and Testing Library cover v1/v2 migration, corruption fallback, rotating recovery, encrypted round trips, timer math, planner priority, adaptive revision intervals, full interview scoring, Mentor mastery, Python-gated sequential progression, all 48 course lessons, all 47 visual worlds, all-problem guide coverage, knowledge-graph links, reasoning/code rubrics, Python harnesses, evidence persistence, LeetCode snapshot/reconciliation validation, Excel export, undo, reset semantics, and modal keyboard behavior.

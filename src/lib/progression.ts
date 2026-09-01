@@ -75,6 +75,7 @@ export function getLevelGates(state: AppState, problems: RoadmapProblem[]): Leve
   const recognitionTotal = state.mentor.recognitionAttempts.length
   const recognitionCorrect = state.mentor.recognitionAttempts.filter((attempt) => attempt.correct).length
   const recognitionRate = recognitionTotal ? Math.round((recognitionCorrect / recognitionTotal) * 100) : 0
+  const completedPythonLessons = Object.values(state.mentor.pythonCourse).filter((lesson) => lesson.completedAt).length
   const independentEasy = uniqueIndependent(state, easyIds)
   const independentMedium = uniqueIndependent(state, mediumIds)
   const independentHard = uniqueIndependent(state, hardIds)
@@ -98,19 +99,25 @@ export function getLevelGates(state: AppState, problems: RoadmapProblem[]): Leve
 
   const gateRequirements: LevelRequirement[][] = [
     [],
-    [requirement('Complete the reasoning diagnostic', state.mentor.onboardingComplete ? 1 : 0, 1)],
     [
+      requirement('Complete the reasoning diagnostic', state.mentor.onboardingComplete ? 1 : 0, 1),
+      requirement('Python foundation lessons', completedPythonLessons, 8),
+    ],
+    [
+      requirement('Python through core collections', completedPythonLessons, 24),
       requirement('Recognition attempts', recognitionTotal, 10),
       requirement('Recognition accuracy', recognitionRate, 60, '%'),
       requirement('Independent Easy solves', independentEasy, 5),
     ],
     [
+      requirement('Python DSA toolkit lessons', completedPythonLessons, 40),
       requirement('Recognition attempts', recognitionTotal, 20),
       requirement('Recognition accuracy', recognitionRate, 70, '%'),
       requirement('Independent Easy solves', independentEasy, 15),
       requirement('Developing patterns', masteredPatterns, 3),
     ],
     [
+      requirement('Python Zero-to-Interview course', completedPythonLessons, 48),
       requirement('Independent Medium solves', independentMedium, 5),
       requirement('Blind recalls without hints', blindRecalls, 5),
       requirement('Strong explanations', strongExplanations, 5),
@@ -156,13 +163,13 @@ export function getLevelProgression(state: AppState, problems: RoadmapProblem[])
     if (!gate.complete) break
     earnedLevel = gate.level
   }
-  const activeLevel = Math.max(state.mentor.currentLevel, earnedLevel) as MentorLevel
+  const activeLevel = earnedLevel
   const nextLevel = Math.min(7, activeLevel + 1) as MentorLevel
   return {
     placementLevel: state.mentor.currentLevel,
     earnedLevel,
     activeLevel,
-    nextGate: gates[nextLevel],
+    nextGate: activeLevel < 7 ? gates[nextLevel] : null,
     gates,
   }
 }

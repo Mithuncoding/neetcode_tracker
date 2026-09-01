@@ -24,6 +24,7 @@ const KnowledgeGraphPage = lazy(() => import('./pages/KnowledgeGraphPage').then(
 const MistakesPage = lazy(() => import('./pages/MistakesPage').then((module) => ({ default: module.MistakesPage })))
 const LeetCodeReconcilePage = lazy(() => import('./pages/LeetCodeReconcilePage').then((module) => ({ default: module.LeetCodeReconcilePage })))
 const AlgorithmLabPage = lazy(() => import('./pages/AlgorithmLabPage').then((module) => ({ default: module.AlgorithmLabPage })))
+const PythonAcademyPage = lazy(() => import('./pages/PythonAcademyPage').then((module) => ({ default: module.PythonAcademyPage })))
 
 function RouteFallback() {
   return <div className="page-content"><div className="h-8 w-40 animate-pulse rounded-[6px] bg-[var(--surface-muted)]" /><div className="panel mt-6 h-72 animate-pulse" /></div>
@@ -45,6 +46,7 @@ export default function RootApp() {
           <Route path="mentor/graph" element={<KnowledgeGraphPage />} />
           <Route path="mentor/mistakes" element={<MistakesPage />} />
           <Route path="mentor/leetcode" element={<LeetCodeReconcilePage />} />
+          <Route path="mentor/python" element={<PythonAcademyPage />} />
           <Route path="plan" element={<PlannerPage />} />
           <Route path="problems" element={<ProblemsPage />} />
           <Route path="topics" element={<TopicsPage />} />
