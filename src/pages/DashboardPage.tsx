@@ -1,155 +1,146 @@
-import { useState } from 'react'
-import { format } from 'date-fns'
+import { useState, type ReactNode } from 'react'
 import {
   ArrowRight,
-  BrainCircuit,
-  Check,
-  Clock3,
+  BookOpenCheck,
+  Code2,
+  ExternalLink,
   Flame,
   Focus,
   Gauge,
+  Play,
   RotateCcw,
   ScanSearch,
   Target,
-  TrendingUp,
+  type LucideIcon,
 } from 'lucide-react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ContributionGrid } from '../components/ContributionGrid'
-import { Badge, Button, DifficultyBadge, ProgressBar } from '../components/ui'
-import type { WorkspaceOutletContext } from '../components/AppShell'
+import { LeetCodeProfilePanel } from '../components/LeetCodeProfilePanel'
+import { Button, DifficultyBadge } from '../components/ui'
 import { useTracker } from '../context/useTracker'
+import { PYTHON_LESSONS } from '../data/python-course'
 import { ROADMAP_PROBLEMS } from '../data/problems'
-import {
-  getCompletionProjection,
-  getDailyActivity,
-  getProblemProgress,
-  getRecommendations,
-  getScores,
-  getStats,
-  getTopicStats,
-} from '../lib/analytics'
-import { getDailyMentorMission, getMentorReadiness } from '../lib/mentor'
-import { getPlannerSummary } from '../lib/planner'
-import { formatDuration } from '../lib/utils'
+import { getDailyActivity, getRecommendations, getStats } from '../lib/analytics'
+import { getDailyMentorMission, getMentorReadiness, getPatternMastery } from '../lib/mentor'
+import { cn, formatDuration } from '../lib/utils'
 
-function ProgressRing({ value }: { value: number }) {
-  const radius = 53
-  const circumference = 2 * Math.PI * radius
+const LANE_STYLES = {
+  blue: { icon: 'bg-[var(--blue-soft)] text-[var(--blue)]', bar: 'bg-[var(--blue)]' },
+  violet: { icon: 'bg-[var(--violet-soft)] text-[var(--violet)]', bar: 'bg-[var(--violet)]' },
+  green: { icon: 'bg-[var(--green-soft)] text-[var(--green-strong)]', bar: 'bg-[var(--green)]' },
+  amber: { icon: 'bg-[var(--amber-soft)] text-[var(--amber)]', bar: 'bg-[var(--amber)]' },
+} as const
+
+function TrainingLane({ icon: Icon, eyebrow, title, detail, value, progress, tone, onClick }: {
+  icon: LucideIcon
+  eyebrow: string
+  title: string
+  detail: string
+  value: string
+  progress: number
+  tone: keyof typeof LANE_STYLES
+  onClick: () => void
+}) {
+  const style = LANE_STYLES[tone]
   return (
-    <div className="relative h-36 w-36 shrink-0">
-      <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-label={`${value}% complete`}>
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--surface-muted)" strokeWidth="8" />
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--accent)" strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - value / 100)} className="transition-[stroke-dashoffset] duration-700" />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="metric-number text-3xl font-extrabold">{value}%</span><span className="text-[10px] font-bold uppercase text-[var(--text-faint)]">complete</span></div>
-    </div>
+    <button type="button" onClick={onClick} className="panel panel-interactive group flex min-h-44 flex-col p-4 text-left">
+      <div className="flex items-start justify-between gap-3"><span className={cn('flex h-9 w-9 items-center justify-center rounded-[6px]', style.icon)}><Icon size={18} /></span><span className="metric-number text-lg font-extrabold">{value}</span></div>
+      <div className="mt-5"><p className="text-[9px] font-extrabold uppercase text-[var(--text-faint)]">{eyebrow}</p><h2 className="mt-1 text-sm font-bold">{title}</h2><p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--text-muted)]">{detail}</p></div>
+      <div className="mt-auto pt-4"><div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]"><div className={cn('h-full rounded-full transition-[width] duration-500', style.bar)} style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} /></div><p className="mt-2 flex items-center justify-between text-[9px] font-bold text-[var(--text-faint)]"><span>Continue training</span><ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" /></p></div>
+    </button>
   )
 }
 
-function MiniStat({ icon: Icon, label, value }: { icon: typeof Target; label: string; value: string | number }) {
-  return (
-    <div className="panel panel-interactive flex min-h-24 items-center gap-3 p-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] bg-[var(--surface-muted)] text-[var(--text-muted)]"><Icon size={17} /></div>
-      <div className="min-w-0"><p className="metric-number text-xl font-extrabold">{value}</p><p className="mt-0.5 truncate text-[10px] font-bold uppercase text-[var(--text-faint)]">{label}</p></div>
-    </div>
-  )
+function EvidenceMetric({ label, value, detail }: { label: string; value: string | number; detail: ReactNode }) {
+  return <div className="border-l-2 border-[var(--border-strong)] pl-3"><p className="metric-number text-xl font-extrabold">{value}</p><p className="mt-0.5 text-[9px] font-extrabold uppercase text-[var(--text-faint)]">{label}</p><div className="mt-1 text-[10px] text-[var(--text-muted)]">{detail}</div></div>
 }
 
 export function DashboardPage() {
-  const { state } = useTracker()
-  const [currentTime] = useState(() => Date.now())
-  const { openProblem } = useOutletContext<WorkspaceOutletContext>()
+  const { state, startSession, startTimer } = useTracker()
   const navigate = useNavigate()
+  const [currentTime] = useState(() => Date.now())
+  const recommendations = getRecommendations(state, ROADMAP_PROBLEMS, Math.max(6, state.settings.dailyGoal))
+  const activeSession = state.sessions.find((session) => !session.endedAt) ?? null
+  const activeTimerProblem = state.activeTimer ? ROADMAP_PROBLEMS.find((problem) => problem.id === state.activeTimer?.problemId) ?? null : null
+  const launchProblem = activeTimerProblem ?? recommendations[0]?.problem ?? null
   const stats = getStats(state, ROADMAP_PROBLEMS)
-  const recommendations = getRecommendations(state, ROADMAP_PROBLEMS, Math.max(4, state.settings.dailyGoal))
+  const readiness = getMentorReadiness(state, ROADMAP_PROBLEMS)
+  const mastery = [...getPatternMastery(state, ROADMAP_PROBLEMS)].sort((left, right) => left.mastery - right.mastery)
+  const mission = getDailyMentorMission(state, ROADMAP_PROBLEMS)
   const activity = getDailyActivity(state)
-  const projection = getCompletionProjection(state, ROADMAP_PROBLEMS.length)
-  const planner = getPlannerSummary(state, ROADMAP_PROBLEMS)
-  const mentorReadiness = getMentorReadiness(state, ROADMAP_PROBLEMS)
-  const mentorMission = getDailyMentorMission(state, ROADMAP_PROBLEMS)
-  const scores = getScores(state, ROADMAP_PROBLEMS)
-  const topicStats = getTopicStats(state, ROADMAP_PROBLEMS)
-  const activeTopic = topicStats.find((topic) => topic.topic === state.settings.activeTopic)
-  const plannedGoal = planner.plannedToday || state.settings.dailyGoal
-  const remainingToday = Math.max(0, plannedGoal - stats.solvedToday)
+  const dueCount = Object.values(state.progress).filter((progress) => progress.nextRevisionAt && Date.parse(progress.nextRevisionAt) <= currentTime).length
+  const completedPython = PYTHON_LESSONS.filter((lesson) => state.mentor.pythonCourse[lesson.id]?.completedAt).length
+  const nextPython = PYTHON_LESSONS.find((lesson) => !state.mentor.pythonCourse[lesson.id]?.completedAt)
+  const recentRecognition = state.mentor.recognitionAttempts.slice(-10)
+  const recognitionRate = recentRecognition.length ? Math.round(recentRecognition.filter((attempt) => attempt.correct).length / recentRecognition.length * 100) : 0
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+
+  const beginLeetCodeSession = () => {
+    if (activeSession) {
+      navigate('/focus')
+      return
+    }
+    if (!launchProblem) return
+    window.open(launchProblem.leetcodeUrl, '_blank', 'noopener,noreferrer')
+    startSession(1)
+    startTimer(launchProblem.id)
+    navigate('/focus')
+  }
 
   return (
     <div className="page-content">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div><h1 className="text-[28px] font-bold leading-tight">Today</h1><p className="mt-1 text-sm text-[var(--text-muted)]">{format(new Date(), 'EEEE, MMMM d')}</p></div>
-        <div className="flex gap-2"><Button variant="secondary" onClick={() => navigate('/focus')}><Focus size={16} /> Focus</Button><Button onClick={() => navigate('/mentor')}><BrainCircuit size={16} /> Open Mentor</Button></div>
+      <header className="mb-7 flex flex-wrap items-end justify-between gap-5">
+        <div><p className="text-[10px] font-extrabold uppercase text-[var(--accent)]">{greeting}, {state.mentor.displayName}</p><h1 className="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">Build the instinct before the answer.</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">Start the clock here, solve on LeetCode, then return to classify the pattern, log the attempt, and schedule recall.</p></div>
+        <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => navigate('/mentor/recognition')}><ScanSearch size={16} /> Pattern sprint</Button><Button variant="secondary" onClick={() => navigate(nextPython ? `/mentor/python?lesson=${nextPython.id}` : '/mentor/python')}><Code2 size={16} /> Python</Button></div>
       </header>
 
-      <section className="panel mb-4 overflow-hidden">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4"><div><div className="flex items-center gap-2"><Badge tone="green">Today&apos;s mission</Badge><span className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Skill before count</span></div><h2 className="mt-2 text-base font-bold">Train the weakest link, then remove support.</h2></div><Button size="sm" onClick={() => mentorMission[0] && navigate(mentorMission[0].route)}>Start first task <ArrowRight size={14} /></Button></header>
-        <div className="grid gap-px bg-[var(--border)] sm:grid-cols-2 xl:grid-cols-3">{mentorMission.slice(0, 6).map((task, index) => <button key={task.id} type="button" onClick={() => navigate(task.route)} className="group flex min-h-20 items-center gap-3 bg-[var(--surface)] px-5 py-4 text-left hover:bg-[var(--surface-raised)]"><span className="metric-number flex h-7 w-7 shrink-0 items-center justify-center rounded-[5px] bg-[var(--surface-muted)] font-mono text-[10px] font-bold text-[var(--text-muted)]">{String(index + 1).padStart(2, '0')}</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{task.label}</p><p className="mt-1 truncate text-[10px] text-[var(--text-faint)]">{task.detail}</p></div><ArrowRight size={13} className="shrink-0 text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" /></button>)}</div>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.25fr_.8fr_.8fr]">
-        <article className="panel flex min-h-56 flex-col justify-between gap-6 p-5 sm:flex-row sm:items-center sm:p-6">
-          <div className="max-w-md">
-            <div className="mb-3 flex items-center gap-2"><Badge tone="green">Roadmap progress</Badge><span className="text-xs text-[var(--text-faint)]">{stats.remaining} remaining</span></div>
-            <p className="metric-number text-4xl font-extrabold">{stats.completed}<span className="text-xl font-semibold text-[var(--text-faint)]"> / 250</span></p>
-            <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
-              {planner.target
-                ? `${planner.requiredPerStudyDay} per study day keeps your ${format(planner.target, 'MMM d')} target in range.`
-                : projection.date
-                ? `At ${projection.pace} problems per day, you are on pace to finish around ${format(projection.date, 'MMM d, yyyy')}.`
-                : `Your daily goal is set to ${state.settings.dailyGoal} problems.`}
-            </p>
+      <section className="mb-4 overflow-hidden rounded-[8px] border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] shadow-[var(--shadow)]">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="p-5 sm:p-7">
+            <div className="flex flex-wrap items-center gap-2"><span className="rounded-[4px] bg-[var(--accent)] px-2 py-1 text-[10px] font-extrabold uppercase text-[var(--accent-contrast)]">Next external solve</span>{launchProblem && <><span className="font-mono text-[10px] text-[var(--sidebar-muted)]">#{launchProblem.leetcodeNumber}</span><DifficultyBadge difficulty={launchProblem.difficulty} /></>}</div>
+            <h2 className="mt-5 max-w-3xl text-2xl font-extrabold text-[var(--sidebar-text)] sm:text-3xl">{activeSession ? 'Your training clock is already running.' : launchProblem?.title ?? 'Your adaptive queue is clear.'}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--sidebar-muted)]">{activeSession ? 'Resume the focused workspace and finish the current evidence loop.' : 'The pattern stays hidden. Read the constraints, name the brute force, and commit to a first structure before asking for help.'}</p>
+            <div className="mt-6 flex flex-wrap gap-2"><Button size="lg" onClick={beginLeetCodeSession} disabled={!launchProblem && !activeSession}>{activeSession ? <Play size={17} /> : <ExternalLink size={17} />} {activeSession ? 'Resume active session' : 'Start timer + open LeetCode'}</Button>{launchProblem && !activeSession && <a href={launchProblem.leetcodeUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 rounded-[6px] border border-[var(--sidebar-border)] bg-[var(--sidebar-raised)] px-5 text-sm font-semibold text-[var(--sidebar-text)] hover:border-[var(--sidebar-muted)]">Open without timer <ExternalLink size={14} /></a>}</div>
           </div>
-          <ProgressRing value={stats.percentage} />
-        </article>
-
-        <article className="panel flex min-h-56 flex-col p-5">
-          <div className="flex items-center justify-between"><div className="flex h-9 w-9 items-center justify-center rounded-[6px] bg-[var(--blue-soft)] text-[var(--blue)]"><Target size={18} /></div><button type="button" onClick={() => navigate('/plan')} className="metric-number text-xs font-bold text-[var(--accent)]">{stats.solvedToday}/{plannedGoal} · Plan →</button></div>
-          <div className="mt-auto"><p className="metric-number text-4xl font-extrabold">{remainingToday}</p><h2 className="mt-1 text-sm font-bold">Remaining today</h2><p className="mt-1 text-xs text-[var(--text-muted)]">{remainingToday ? planner.risk === 'high' ? 'Target pace needs a stronger session.' : 'Keep the session small and focused.' : 'Daily goal complete.'}</p><ProgressBar value={(stats.solvedToday / plannedGoal) * 100} className="mt-5" /></div>
-        </article>
-
-        <article className="panel flex min-h-56 flex-col p-5">
-          <div className="flex items-center justify-between"><div className="flex h-9 w-9 items-center justify-center rounded-[6px] bg-[var(--amber-soft)] text-[var(--amber)]"><Flame size={18} /></div><span className="text-xs font-bold text-[var(--text-faint)]">Best {stats.longestStreak} days</span></div>
-          <div className="mt-auto"><p className="metric-number text-4xl font-extrabold">{stats.currentStreak}<span className="ml-1 text-base font-semibold text-[var(--text-muted)]">days</span></p><h2 className="mt-1 text-sm font-bold">Current streak</h2><p className="mt-1 text-xs text-[var(--text-muted)]">Any attempt keeps the chain active.</p><div className="mt-5 flex gap-1">{Array.from({ length: 7 }, (_, index) => <span key={index} className={`h-1.5 flex-1 rounded-full ${index < Math.min(stats.currentStreak, 7) ? 'bg-[var(--amber)]' : 'bg-[var(--surface-muted)]'}`} />)}</div></div>
-        </article>
+          <aside className="hidden border-t border-[var(--sidebar-border)] bg-[var(--sidebar-raised)] p-5 lg:block lg:border-l lg:border-t-0 sm:p-6">
+            <div className="flex items-center justify-between"><p className="text-[10px] font-extrabold uppercase text-[var(--sidebar-muted)]">Solve protocol</p><Focus size={17} className="text-[var(--sidebar-active-text)]" /></div>
+            <ol className="mt-4 space-y-3">{[
+              ['00–05', 'Understand', 'Restate inputs, output, constraints.'],
+              ['05–15', 'Derive', 'Write brute force and bottleneck.'],
+              ['15–40', 'Implement', 'Code and test on LeetCode.'],
+              ['40–45', 'Reflect', 'Classify pattern and failure.'],
+            ].map(([time, title, detail]) => <li key={time} className="grid grid-cols-[46px_1fr] gap-3"><span className="font-mono text-[9px] font-bold text-[var(--sidebar-active-text)]">{time}</span><div><p className="text-xs font-bold text-[var(--sidebar-text)]">{title}</p><p className="mt-0.5 text-[10px] leading-4 text-[var(--sidebar-muted)]">{detail}</p></div></li>)}</ol>
+          </aside>
+        </div>
       </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[1.5fr_.7fr]">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <TrainingLane icon={ScanSearch} eyebrow="Recognition" title="Classify before coding" detail={`${recentRecognition.length} recent classifications · ${recognitionRate}% correct`} value={`${readiness.patternRecognition}%`} progress={readiness.patternRecognition} tone="blue" onClick={() => navigate('/mentor/recognition')} />
+        <TrainingLane icon={Code2} eyebrow="Python fluency" title={nextPython?.title ?? 'Course mastered'} detail={nextPython ? `Lesson ${nextPython.order} of 48 · executable practice` : 'All language foundations are complete.'} value={`${completedPython}/48`} progress={completedPython / 48 * 100} tone="violet" onClick={() => navigate(nextPython ? `/mentor/python?lesson=${nextPython.id}` : '/mentor/python')} />
+        <TrainingLane icon={RotateCcw} eyebrow="Recall" title={dueCount ? `${dueCount} blind re-solve${dueCount === 1 ? '' : 's'} due` : 'Recall queue is clear'} detail="Spaced repetition turns a first solve into retrieval strength." value={String(dueCount)} progress={Math.min(100, dueCount * 20)} tone="green" onClick={() => navigate('/revision')} />
+        <TrainingLane icon={Gauge} eyebrow="Interview readiness" title="Evidence, not optimism" detail={readiness.diagnosis} value={`${readiness.score}%`} progress={readiness.score} tone="amber" onClick={() => navigate('/analytics')} />
+      </section>
+
+      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)]">
         <article className="panel overflow-hidden">
-          <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4"><div><h2 className="text-sm font-bold">Adaptive queue</h2><p className="mt-0.5 text-xs text-[var(--text-muted)]">Urgency, weak patterns, target pace, and variety</p></div><button type="button" onClick={() => navigate('/plan')} className="text-xs font-bold text-[var(--accent)]">Open plan</button></header>
-          <div className="divide-y divide-[var(--border)]">
-            {recommendations.map(({ problem, reason }, index) => {
-              const progress = getProblemProgress(state, problem.id)
-              return (
-                <button key={problem.id} type="button" onClick={() => openProblem(problem.id)} className="group flex w-full items-center gap-4 px-5 py-3.5 text-left hover:bg-[var(--surface-raised)]">
-                  <span className="metric-number flex h-7 w-7 shrink-0 items-center justify-center rounded-[5px] bg-[var(--surface-muted)] font-mono text-[10px] text-[var(--text-muted)]">{String(index + 1).padStart(2, '0')}</span>
-                  <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-semibold">{problem.title}</p>{progress.nextRevisionAt && Date.parse(progress.nextRevisionAt) <= currentTime && <RotateCcw size={13} className="shrink-0 text-[var(--red)]" />}</div><p className="mt-0.5 truncate text-[10px] text-[var(--text-faint)]">{problem.patterns[0]} · {reason}</p></div>
-                  <DifficultyBadge difficulty={problem.difficulty} /><ArrowRight size={15} className="text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" />
-                </button>
-              )
-            })}
-          </div>
+          <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4"><div><p className="text-[10px] font-extrabold uppercase text-[var(--text-faint)]">Today&apos;s protocol</p><h2 className="mt-1 text-base font-bold">Small loop. Complete evidence.</h2></div><Target size={18} className="text-[var(--accent)]" /></header>
+          <div className="divide-y divide-[var(--border)]">{mission.slice(0, 5).map((task, index) => <button key={task.id} type="button" onClick={() => navigate(task.route)} className="group flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-[var(--surface-raised)]"><span className="metric-number flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] font-mono text-[9px] font-bold text-[var(--text-faint)]">{String(index + 1).padStart(2, '0')}</span><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{task.label}</p><p className="mt-1 truncate text-[10px] text-[var(--text-faint)]">{task.detail}</p></div><ArrowRight size={14} className="text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" /></button>)}</div>
         </article>
+        <LeetCodeProfilePanel />
+      </section>
 
+      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.7fr)]">
         <article className="panel p-5">
-          <div className="mb-5 flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Current topic</p><h2 className="mt-1 text-base font-bold">{state.settings.activeTopic}</h2></div><Gauge size={18} className="text-[var(--accent)]" /></div>
-          <p className="metric-number text-3xl font-extrabold">{activeTopic?.percentage ?? 0}%</p><ProgressBar value={activeTopic?.percentage ?? 0} className="mt-3" />
-          <div className="mt-5 grid grid-cols-2 gap-y-4 border-t border-[var(--border)] pt-4 text-xs"><div><p className="text-[var(--text-faint)]">Completed</p><p className="metric-number mt-1 font-bold">{activeTopic?.completed ?? 0}/{activeTopic?.total ?? 0}</p></div><div><p className="text-[var(--text-faint)]">Confidence</p><p className="metric-number mt-1 font-bold">{activeTopic?.averageConfidence || '-'}/5</p></div><div><p className="text-[var(--text-faint)]">Avg time</p><p className="metric-number mt-1 font-bold">{formatDuration(activeTopic?.averageSeconds ?? 0, true)}</p></div><div><p className="text-[var(--text-faint)]">Practiced</p><p className="metric-number mt-1 font-bold">{activeTopic?.practiced ?? 0}x</p></div></div>
+          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase text-[var(--text-faint)]">Weakest pattern signals</p><h2 className="mt-1 text-base font-bold">Train recognition where evidence is thinnest.</h2></div><Button size="sm" variant="secondary" onClick={() => navigate('/mentor/curriculum')}><BookOpenCheck size={14} /> Pattern library</Button></div>
+          <div className="mt-5 space-y-4">{mastery.slice(0, 5).map((skill) => <button key={skill.pattern} type="button" onClick={() => navigate('/mentor/curriculum')} className="block w-full text-left"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold">{skill.pattern}</p><p className="mt-0.5 text-[9px] text-[var(--text-faint)]">{skill.evidence} evidence event{skill.evidence === 1 ? '' : 's'}</p></div><span className="metric-number text-xs font-extrabold">{skill.mastery}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]"><div className="h-full rounded-full bg-[var(--blue)]" style={{ width: `${skill.mastery}%` }} /></div></button>)}</div>
         </article>
-      </section>
 
-      <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
-        <MiniStat icon={Check} label="Problems solved" value={stats.completed} />
-        <MiniStat icon={Target} label="Independent" value={stats.independent} />
-        <MiniStat icon={ScanSearch} label="Recognition" value={`${mentorReadiness.patternRecognition}%`} />
-        <MiniStat icon={TrendingUp} label="Medium independence" value={`${mentorReadiness.mediumSolving}%`} />
-        <MiniStat icon={RotateCcw} label="Revision retention" value={`${mentorReadiness.recall}%`} />
-        <MiniStat icon={Clock3} label="Average time" value={formatDuration(stats.averageSeconds, true)} />
-        <MiniStat icon={Flame} label="Longest streak" value={stats.longestStreak} />
-        <MiniStat icon={Gauge} label="DSA readiness" value={`${mentorReadiness.score}%`} />
-      </section>
-
-      <section className="panel mt-4 p-5">
-        <div className="mb-5 flex items-center justify-between"><div><h2 className="text-sm font-bold">Activity</h2><p className="mt-0.5 text-xs text-[var(--text-muted)]">Last 12 weeks</p></div><span className="metric-number text-xs font-bold text-[var(--text-faint)]">Strength {scores.strength}%</span></div>
-        <ContributionGrid activity={activity} days={84} />
+        <article className="panel overflow-hidden">
+          <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4"><div><p className="text-[10px] font-extrabold uppercase text-[var(--text-faint)]">Training evidence</p><h2 className="mt-1 text-base font-bold">Last 12 weeks</h2></div><Flame size={18} className="text-[var(--amber)]" /></header>
+          <div className="overflow-x-auto p-5"><ContributionGrid activity={activity} days={84} /></div>
+          <div className="grid grid-cols-2 gap-4 border-t border-[var(--border)] bg-[var(--surface-raised)] p-5"><EvidenceMetric label="Current streak" value={`${stats.currentStreak}d`} detail={`Best ${stats.longestStreak}d`} /><EvidenceMetric label="Independent" value={stats.independent} detail="Measured solves" /><EvidenceMetric label="Roadmap exposure" value={`${stats.completed}/250`} detail="Secondary metric" /><EvidenceMetric label="Average solve" value={formatDuration(stats.averageSeconds, true)} detail="Timed attempts" /></div>
+        </article>
       </section>
     </div>
   )

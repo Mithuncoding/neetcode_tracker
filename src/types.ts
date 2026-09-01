@@ -78,6 +78,8 @@ export interface SolveAttempt {
   notes: string
   revisionNeeded: boolean
   sessionId: string | null
+  patternGuess?: string | null
+  patternCorrect?: boolean | null
 }
 
 export interface RevisionRecord {

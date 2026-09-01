@@ -1,10 +1,15 @@
-# Mithun DSA Academy
+# Mithun's Interview Studio
 
-An offline-first personal DSA mentor built on the NeetCode 250 tracker. The roadmap remains the problem backbone, while the product measures pattern recognition, implementation, recall, explanation, and independent problem solving instead of treating a solved checkbox as mastery.
+An offline-first personal interview-preparation system. Start the timer here, solve on LeetCode, then return to classify the pattern, record the outcome, schedule recall, and measure independent improvement. The fixed 250-problem roadmap remains a practice index rather than the product identity.
 
 All learning evidence stays in the browser through `localStorage`. The application has no backend, account, AI dependency, or opaque recommendation service. The first executable Python lesson downloads Pyodide; the PWA caches it for later runs.
 
-## Mentor Mode
+## Training Studio
+
+- **One-stop command center** puts the next external LeetCode solve, timer, Pattern Sprint, Python lesson, recall queue, readiness evidence, and public profile sync on one screen.
+- **LeetCode-first focus sessions** open the selected problem externally, keep the pattern hidden, time the attempt locally, and finish with a required after-solve pattern reflection.
+- **Daily profile synchronization** imports the same-origin public snapshot once per day. GitHub Actions refreshes that snapshot from `Mithuncoding` daily; public totals remain exposure signals only.
+- **Pattern Sprint** trains five blank-prompt classifications at a time and contrasts the guessed and expected cue sets after every miss.
 
 - **Reasoning diagnostic** places the learner at a capability level from programming foundation through the Easy-to-Medium transition.
 - **Guided solve workspace** enforces Understand → Think → Hint → Implement → Explain → Revisit.
@@ -13,7 +18,7 @@ All learning evidence stays in the browser through `localStorage`. The applicati
 - **Pattern recognition training** covers the full roadmap and records committed choices and confidence before showing feedback.
 - **Mastery profiles** separate recognition, implementation, recall, and independence and cap low-evidence scores.
 - **Mastery-gated levels** require sequential first-party evidence; public LeetCode totals cannot earn promotion.
-- **Daily missions** combine a concept, recognition drill, guided warm-up, Medium bridge, blind re-solve, and explanation task.
+- **Daily protocols** combine Python, recognition, one deliberate external solve, blind recall, and explanation practice.
 - **Medium trainer** moves through Easy concept, Easy implementation, variation, guided Medium, and unseen Medium.
 - **Failure memory** records or infers why an attempt failed, supports repair practice, and can be resolved or reopened.
 - **Blind re-solves** update the adaptive spaced-repetition schedule instead of being counted as new solves.

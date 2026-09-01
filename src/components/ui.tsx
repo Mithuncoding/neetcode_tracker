@@ -19,7 +19,7 @@ export function Button({
     <button
       className={cn(
         'inline-flex shrink-0 items-center justify-center gap-2 rounded-[6px] border font-semibold transition-all active:translate-y-px active:scale-[.985] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:translate-y-0 disabled:active:scale-100',
-        variant === 'primary' && 'border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_1px_2px_rgba(24,118,83,0.25)] hover:bg-[var(--accent-strong)] hover:shadow-[0_3px_10px_rgba(24,118,83,0.28)]',
+        variant === 'primary' && 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[var(--button-shadow)] hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]',
         variant === 'secondary' && 'border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]',
         variant === 'ghost' && 'border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]',
         variant === 'danger' && 'border-[var(--red)] bg-[var(--red)] text-white shadow-[0_1px_2px_rgba(184,67,67,0.25)] hover:brightness-90 hover:shadow-[0_3px_10px_rgba(184,67,67,0.28)]',
@@ -60,7 +60,7 @@ export function IconButton({
 export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'green' | 'amber' | 'blue' | 'red' | 'violet' }) {
   const tones = {
     neutral: 'bg-[var(--surface-muted)] text-[var(--text-muted)]',
-    green: 'bg-[var(--accent-soft)] text-[var(--accent-strong)]',
+    green: 'bg-[var(--green-soft)] text-[var(--green-strong)]',
     amber: 'bg-[var(--amber-soft)] text-[var(--amber)]',
     blue: 'bg-[var(--blue-soft)] text-[var(--blue)]',
     red: 'bg-[var(--red-soft)] text-[var(--red)]',
@@ -124,7 +124,7 @@ export function Notice({ children, tone = 'warning' }: { children: ReactNode; to
       'flex items-start gap-3 border-b px-4 py-3 text-xs font-medium',
       tone === 'warning' && 'border-[var(--amber)] bg-[var(--amber-soft)] text-[var(--amber)]',
       tone === 'danger' && 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]',
-      tone === 'success' && 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]',
+      tone === 'success' && 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-strong)]',
     )}>
       <Icon className="mt-0.5 shrink-0" size={15} />
       {children}

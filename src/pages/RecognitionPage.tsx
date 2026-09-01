@@ -13,29 +13,12 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { Badge, Button, PageHeader, ProgressBar } from '../components/ui'
 import { useTracker } from '../context/useTracker'
-import { RECOGNITION_DRILLS, type CorePattern } from '../data/mentor-content'
+import { PATTERN_LESSONS, RECOGNITION_DRILLS, type CorePattern } from '../data/mentor-content'
 import { ROADMAP_PROBLEMS } from '../data/problems'
-import { getCorePattern } from '../lib/mentor'
-import { getProblemTeachingGuide, getRecognitionOptions } from '../lib/problem-guides'
-
-const curatedByTitle = new Map(RECOGNITION_DRILLS.map((drill) => [drill.problemTitle, drill]))
-const availableDrills = ROADMAP_PROBLEMS.map((problem) => {
-  const curated = curatedByTitle.get(problem.title)
-  if (curated) return { drill: curated, problem }
-  const resolved = getProblemTeachingGuide(problem)
-  return {
-    problem,
-    drill: {
-      id: `roadmap-${problem.id}`,
-      problemTitle: problem.title,
-      level: problem.difficulty === 'Easy' ? 2 as const : problem.difficulty === 'Medium' ? 4 as const : 5 as const,
-      prompt: `Before writing code for “${problem.title}”, which reusable technique would you test first?`,
-      clues: resolved.guide.recognitionClues.slice(0, 2),
-      answer: getCorePattern(problem),
-      options: getRecognitionOptions(problem, ROADMAP_PROBLEMS),
-      explanation: resolved.guide.keyObservation,
-    },
-  }
+const problemByTitle = new Map(ROADMAP_PROBLEMS.map((problem) => [problem.title, problem]))
+const availableDrills = RECOGNITION_DRILLS.flatMap((drill) => {
+  const problem = problemByTitle.get(drill.problemTitle)
+  return problem ? [{ drill, problem }] : []
 })
 
 export function RecognitionPage() {
@@ -52,6 +35,8 @@ export function RecognitionPage() {
   const [sessionTotal, setSessionTotal] = useState(0)
   const item = drills[index % drills.length]
   const correct = selected === item.drill.answer
+  const expectedLesson = PATTERN_LESSONS[item.drill.answer]
+  const selectedLesson = selected ? PATTERN_LESSONS[selected] : null
   const recent = state.mentor.recognitionAttempts.slice(-20)
   const recentAccuracy = recent.length
     ? Math.round((recent.filter((attempt) => attempt.correct).length / recent.length) * 100)
@@ -87,7 +72,7 @@ export function RecognitionPage() {
 
   return (
     <div className="page-content">
-      <PageHeader title="Pattern recognition" description="Choose what you would try before solving the problem." actions={<Button variant="secondary" onClick={() => navigate('/mentor')}><ArrowLeft size={15} /> Mentor</Button>} />
+      <PageHeader title="Pattern Sprint" description="Five blank-prompt classifications. Commit before feedback; learn the discriminating cue." actions={<Button variant="secondary" onClick={() => navigate('/')}><ArrowLeft size={15} /> Today</Button>} />
 
       <section className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="panel p-4"><p className="metric-number text-2xl font-extrabold">{sessionTotal ? `${sessionCorrect}/${sessionTotal}` : '-'}</p><p className="mt-1 text-[10px] font-bold uppercase text-[var(--text-faint)]">This drill</p></div>
@@ -112,13 +97,15 @@ export function RecognitionPage() {
                 const selectedOption = selected === option
                 const answer = revealed && option === item.drill.answer
                 const wrong = revealed && selectedOption && !correct
-                return <button key={option} type="button" disabled={revealed} onClick={() => setSelected(option)} className={`flex min-h-14 items-center gap-3 rounded-[6px] border px-4 text-left text-sm font-bold transition-colors ${answer ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]' : wrong ? 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]' : selectedOption ? 'border-[var(--blue)] bg-[var(--blue-soft)] text-[var(--blue)]' : 'border-[var(--border)] bg-[var(--surface-raised)] hover:border-[var(--border-strong)]'}`}><span className="metric-number flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-current font-mono text-[10px]">{revealed && (answer || wrong) ? answer ? <Check size={13} /> : <X size={13} /> : optionIndex + 1}</span>{option}</button>
+                return <button key={option} type="button" disabled={revealed} onClick={() => setSelected(option)} className={`flex min-h-14 items-center gap-3 rounded-[6px] border px-4 text-left text-sm font-bold transition-colors ${answer ? 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-strong)]' : wrong ? 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]' : selectedOption ? 'border-[var(--blue)] bg-[var(--blue-soft)] text-[var(--blue)]' : 'border-[var(--border)] bg-[var(--surface-raised)] hover:border-[var(--border-strong)]'}`}><span className="metric-number flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-current font-mono text-[10px]">{revealed && (answer || wrong) ? answer ? <Check size={13} /> : <X size={13} /> : optionIndex + 1}</span>{option}</button>
               })}</div>
             </div>
 
             {!revealed && <div className="mt-6"><div className="mb-2 flex items-center justify-between"><p className="text-[10px] font-extrabold uppercase text-[var(--text-faint)]">Confidence before feedback</p><span className="metric-number text-xs font-bold">{confidence}/5</span></div><div className="grid grid-cols-5 gap-2">{([1, 2, 3, 4, 5] as const).map((value) => <button key={value} type="button" onClick={() => setConfidence(value)} aria-label={`Confidence ${value}`} className={`h-9 rounded-[5px] border font-mono text-xs font-bold ${confidence === value ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'}`}>{value}</button>)}</div></div>}
 
-            {revealed && <div className={`mt-6 rounded-[6px] border p-4 ${correct ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--amber)] bg-[var(--amber-soft)]'}`}><div className="flex items-center gap-2"><Lightbulb size={16} /><p className="text-xs font-extrabold">{correct ? 'Pattern fit confirmed' : `Try ${item.drill.answer}`}</p></div><p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{item.drill.explanation}</p>{!correct && confidence >= 4 && <p className="mt-2 text-xs font-bold text-[var(--red)]">High-confidence misses are especially useful evidence: slow down and test the clue against the pattern invariant.</p>}</div>}
+            {revealed && <div className={`mt-6 rounded-[6px] border p-4 ${correct ? 'border-[var(--green)] bg-[var(--green-soft)]' : 'border-[var(--amber)] bg-[var(--amber-soft)]'}`}><div className="flex items-center gap-2"><Lightbulb size={16} /><p className="text-xs font-extrabold">{correct ? 'Pattern fit confirmed' : `Better first test: ${item.drill.answer}`}</p></div><p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{item.drill.explanation}</p>{!correct && confidence >= 4 && <p className="mt-2 text-xs font-bold text-[var(--red)]">High-confidence miss: write down the cue that separated these patterns.</p>}</div>}
+
+            {revealed && <section className="mt-3 grid gap-px overflow-hidden rounded-[6px] border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2"><div className="bg-[var(--surface)] p-4"><p className="text-[9px] font-extrabold uppercase text-[var(--green-strong)]">Signals for {item.drill.answer}</p><ul className="mt-3 space-y-2">{expectedLesson.recognitionClues.slice(0, 3).map((clue) => <li key={clue} className="flex gap-2 text-xs leading-5 text-[var(--text-muted)]"><Check size={12} className="mt-1 shrink-0 text-[var(--green)]" />{clue}</li>)}</ul></div><div className="bg-[var(--surface-raised)] p-4"><p className="text-[9px] font-extrabold uppercase text-[var(--text-faint)]">Contrast {correct ? 'with a nearby choice' : `your ${selected}`}</p><p className="mt-3 text-xs leading-5 text-[var(--text-muted)]">{correct ? 'Say why the strongest distractor fails before moving on.' : selectedLesson?.what}</p>{!correct && selectedLesson && <p className="mt-3 border-t border-[var(--border)] pt-3 text-[10px] leading-4 text-[var(--text-faint)]">Typical cue: {selectedLesson.recognitionClues[0]}</p>}</div></section>}
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">{revealed ? <><Button variant="secondary" onClick={() => navigate(`/mentor/problem/${item.problem.id}`)}>Derive this problem</Button><Button onClick={next}>Next challenge <ArrowRight size={15} /></Button></> : <Button onClick={submit} disabled={!selected}>Commit answer <Check size={15} /></Button>}</div>
           </div>
@@ -127,7 +114,7 @@ export function RecognitionPage() {
         <aside className="space-y-4">
           <section className="panel p-5">
             <div className="flex h-9 w-9 items-center justify-center rounded-[6px] bg-[var(--violet-soft)] text-[var(--violet)]"><BrainCircuit size={18} /></div>
-            <h2 className="mt-4 text-sm font-bold">Ask before choosing</h2>
+            <h2 className="mt-4 text-sm font-bold">Pattern compass</h2>
             <ol className="mt-4 space-y-3 text-xs leading-5 text-[var(--text-muted)]">
               <li><strong className="mr-2 font-mono text-[var(--accent)]">01</strong> Is the answer contiguous, ordered, or relational?</li>
               <li><strong className="mr-2 font-mono text-[var(--accent)]">02</strong> What repeated work appears in brute force?</li>

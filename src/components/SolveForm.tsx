@@ -1,7 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Check, Lightbulb, Minus, Plus, Video, X } from 'lucide-react'
+import { Check, Crosshair, Lightbulb, Minus, Plus, Video, X } from 'lucide-react'
 import { useTracker } from '../context/useTracker'
+import { type CorePattern } from '../data/mentor-content'
+import { ROADMAP_PROBLEMS } from '../data/problems'
 import { getProblemProgress } from '../lib/analytics'
+import { getCorePattern } from '../lib/mentor'
+import { getProblemTeachingGuide, getRecognitionOptions } from '../lib/problem-guides'
 import { getTimerSeconds } from '../lib/utils'
 import type { RoadmapProblem, SolveOutcome } from '../types'
 import { Button, IconButton } from './ui'
@@ -21,8 +25,14 @@ export function SolveForm({ problem, sessionId = null, onSaved }: { problem: Roa
   const [confidence, setConfidence] = useState<1 | 2 | 3 | 4 | 5>(progress.confidence ?? 3)
   const [notes, setNotes] = useState('')
   const [revisionNeeded, setRevisionNeeded] = useState(false)
+  const [patternGuess, setPatternGuess] = useState<CorePattern | null>(null)
+  const [patternLocked, setPatternLocked] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const timer = state.activeTimer?.problemId === problem.id ? state.activeTimer : null
+  const expectedPattern = getCorePattern(problem)
+  const patternCorrect = patternGuess === expectedPattern
+  const patternOptions = getRecognitionOptions(problem, ROADMAP_PROBLEMS)
+  const teachingGuide = getProblemTeachingGuide(problem).guide
 
   useEffect(() => {
     if (!timer?.running) return
@@ -32,21 +42,30 @@ export function SolveForm({ problem, sessionId = null, onSaved }: { problem: Roa
 
   function submit(event: FormEvent) {
     event.preventDefault()
+    if (!patternGuess || !patternLocked) return
     logAttempt({
       problemId: problem.id,
       outcome,
       attempts,
       confidence,
       notes,
-      revisionNeeded: revisionNeeded || outcome === 'unable',
+      revisionNeeded: revisionNeeded || outcome === 'unable' || !patternCorrect,
       durationSeconds: timer ? getTimerSeconds(timer, now) : 0,
       sessionId,
+      patternGuess,
+      patternCorrect,
     })
     onSaved()
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <fieldset>
+        <div className="mb-3 flex items-start gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[var(--blue-soft)] text-[var(--blue)]"><Crosshair size={16} /></div><div><legend className="text-xs font-bold uppercase text-[var(--text-faint)]">Pattern reflection</legend><p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">What reusable structure actually unlocked the solution?</p></div></div>
+        <div className="grid gap-2 sm:grid-cols-2">{patternOptions.map((pattern) => <button key={pattern} type="button" disabled={patternLocked} onClick={() => setPatternGuess(pattern)} className={`min-h-10 rounded-[6px] border px-3 text-left text-xs font-semibold ${patternLocked && pattern === expectedPattern ? 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-strong)]' : patternLocked && patternGuess === pattern ? 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]' : patternGuess === pattern ? 'border-[var(--blue)] bg-[var(--blue-soft)] text-[var(--blue)]' : 'border-[var(--border)] bg-[var(--surface-raised)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'}`}>{pattern}</button>)}</div>
+        {!patternLocked ? <Button type="button" size="sm" variant="secondary" className="mt-3" disabled={!patternGuess} onClick={() => setPatternLocked(true)}>Commit pattern</Button> : <div className={`mt-3 rounded-[6px] border p-3 ${patternCorrect ? 'border-[var(--green)] bg-[var(--green-soft)]' : 'border-[var(--amber)] bg-[var(--amber-soft)]'}`}><p className="text-xs font-extrabold">{patternCorrect ? 'Pattern recognized.' : `Better fit: ${expectedPattern}`}</p><p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">{teachingGuide.keyObservation}</p></div>}
+      </fieldset>
+      {patternLocked && <>
       <fieldset>
         <legend className="mb-2 text-xs font-bold uppercase text-[var(--text-faint)]">Outcome</legend>
         <div className="grid grid-cols-2 gap-2">
@@ -70,7 +89,7 @@ export function SolveForm({ problem, sessionId = null, onSaved }: { problem: Roa
           <legend className="mb-2 text-xs font-bold uppercase text-[var(--text-faint)]">Confidence</legend>
           <div className="flex gap-1">
             {([1, 2, 3, 4, 5] as const).map((value) => (
-              <button key={value} type="button" aria-label={`Confidence ${value} of 5`} aria-pressed={confidence === value} onClick={() => setConfidence(value)} className={`h-9 min-w-8 flex-1 rounded-[5px] border text-xs font-bold ${confidence === value ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'}`}>{value}</button>
+              <button key={value} type="button" aria-label={`Confidence ${value} of 5`} aria-pressed={confidence === value} onClick={() => setConfidence(value)} className={`h-9 min-w-8 flex-1 rounded-[5px] border text-xs font-bold ${confidence === value ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'}`}>{value}</button>
             ))}
           </div>
         </fieldset>
@@ -81,9 +100,10 @@ export function SolveForm({ problem, sessionId = null, onSaved }: { problem: Roa
       </label>
       <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--text-muted)]">
         <input type="checkbox" checked={revisionNeeded || outcome === 'unable'} disabled={outcome === 'unable'} onChange={(event) => setRevisionNeeded(event.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-        Add to revision queue
+        Add to recall queue{!patternCorrect ? ' · required after a pattern miss' : ''}
       </label>
-      <Button type="submit" className="w-full"><Check size={17} /> Save attempt</Button>
+      <Button type="submit" className="w-full"><Check size={17} /> Save reflection</Button>
+      </>}
     </form>
   )
 }

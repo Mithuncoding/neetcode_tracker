@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import type { LeetCodeProfileSnapshot, RoadmapProblem } from '../types'
 
+export const LEETCODE_USERNAME = 'Mithuncoding'
+export const LEETCODE_SYNC_DATE_KEY = 'mithun-interview-studio:leetcode-sync-date'
+
 const snapshotSchema = z.object({
   schemaVersion: z.literal(1),
   username: z.string(),

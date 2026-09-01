@@ -37,7 +37,7 @@ export function FocusPage() {
   } = useTracker()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [goal, setGoal] = useState<SessionGoal>(params.get('mode') === 'revision' ? 'revision' : 2)
+  const [goal, setGoal] = useState<SessionGoal>(params.get('mode') === 'revision' ? 'revision' : 1)
   const [customGoal, setCustomGoal] = useState(4)
   const [loggingProblemId, setLoggingProblemId] = useState<string | null>(null)
   const [summarySessionId, setSummarySessionId] = useState<string | null>(null)
@@ -143,7 +143,7 @@ export function FocusPage() {
             <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-[7px] border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
               {[{ label: 'Attempted', value: summary.problemIds.length }, { label: 'Solved', value: solved }, { label: 'Independent', value: independent }, { label: 'Hints used', value: hints }, { label: 'Study time', value: formatDuration(studySeconds) }, { label: 'Confidence', value: averageConfidence ? `${Math.round(averageConfidence * 10) / 10}/5` : '-' }].map((item) => <div key={item.label} className="bg-[var(--surface)] p-5"><p className="metric-number text-2xl font-extrabold">{item.value}</p><p className="mt-1 text-[10px] font-bold uppercase text-[var(--text-faint)]">{item.label}</p></div>)}
             </div>
-            <div className="mt-8 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => { setSummarySessionId(null); setGoal(2) }}><RotateCcw size={15} /> New session</Button><Button onClick={() => navigate('/')}><Check size={15} /> Back to today</Button></div>
+            <div className="mt-8 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => { setSummarySessionId(null); setGoal(1) }}><RotateCcw size={15} /> New session</Button><Button onClick={() => navigate('/')}><Check size={15} /> Back to today</Button></div>
           </section>
         </div>
       </main>
@@ -157,7 +157,8 @@ export function FocusPage() {
         <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-2xl items-center justify-center py-10">
           <section className="panel w-full p-6 shadow-[var(--shadow)] sm:p-8">
             <div className="flex h-11 w-11 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[var(--accent)]"><Target size={20} /></div>
-            <h1 className="mt-5 text-2xl font-extrabold">Set a session goal</h1>
+            <h1 className="mt-5 text-2xl font-extrabold">Choose your LeetCode block</h1>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">One deliberate problem is the default. Add volume only when the full solve-and-reflect loop stays honest.</p>
             <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
               {([1, 2, 3, 5] as const).map((value) => <button key={value} type="button" aria-pressed={goal === value} onClick={() => setGoal(value)} className={`h-11 rounded-[6px] border text-sm font-bold ${goal === value ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'}`}>{value}</button>)}
               <button type="button" aria-pressed={goal === customGoal} onClick={() => setGoal(customGoal)} className={`h-11 rounded-[6px] border text-xs font-bold ${goal === customGoal ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'}`}>Custom</button>
@@ -197,7 +198,7 @@ export function FocusPage() {
           <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-[var(--text-faint)]">#{target.leetcodeNumber}</span><DifficultyBadge difficulty={target.difficulty} />{isRevision && <Badge tone="red">Revision due</Badge>}</div>
           <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight sm:text-4xl">{target.title}</h1>
           <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">{target.topic}</p>
-          <div className="mt-7 flex flex-wrap gap-2"><a href={target.leetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-xs font-bold hover:border-[var(--accent)]">Open LeetCode <ExternalLink size={13} /></a><a href={target.neetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-xs font-bold hover:border-[var(--accent)]">Open NeetCode <ExternalLink size={13} /></a></div>
+          <div className="mt-7"><a href={target.leetcodeUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 rounded-[6px] border border-[var(--accent)] bg-[var(--accent)] px-5 text-sm font-bold text-[var(--accent-contrast)] shadow-[var(--button-shadow)] hover:bg-[var(--accent-strong)]">Open problem on LeetCode <ExternalLink size={15} /></a><p className="mt-2 text-[10px] text-[var(--text-faint)]">The pattern stays hidden here until you log the attempt.</p></div>
           <div className="mt-12"><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Session timer</p><p className="metric-number mt-2 font-mono text-5xl font-semibold sm:text-6xl">{formatTimer(timerSeconds)}</p><div className="mt-5 flex items-center gap-2">{!timer && <Button onClick={() => startTimer(target.id)}><Play size={16} /> Start timer</Button>}{timer?.running && <IconButton icon={Pause} label="Pause timer" onClick={pauseTimer} />}{timer && !timer.running && <IconButton icon={Play} label="Resume timer" onClick={resumeTimer} />}{timer && <IconButton icon={TimerReset} label="Clear timer" onClick={cancelTimer} />}</div></div>
         </section>
 
@@ -207,7 +208,7 @@ export function FocusPage() {
           ) : logging ? (
             <div><button type="button" onClick={() => setLoggingProblemId(null)} className="mb-5 flex items-center gap-1 text-xs font-bold text-[var(--accent)]"><ArrowLeft size={13} /> Back</button><SolveForm problem={target} sessionId={activeSession.id} onSaved={() => setLoggingProblemId(null)} /></div>
           ) : (
-            <div><div className="mb-6 flex h-10 w-10 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[var(--accent)]"><Focus size={18} /></div><h2 className="text-lg font-bold">Stay with the problem</h2><p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">Log the outcome when the attempt is complete.</p><Button className="mt-6 w-full" size="lg" onClick={() => setLoggingProblemId(target.id)}><Check size={16} /> Finish and log</Button></div>
+            <div><div className="mb-6 flex h-10 w-10 items-center justify-center rounded-[7px] bg-[var(--accent-soft)] text-[var(--accent)]"><Focus size={18} /></div><h2 className="text-lg font-bold">Solve there. Reflect here.</h2><p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">When LeetCode accepts, times out, or you need help, return and record exactly what happened.</p><div className="mt-5 rounded-[6px] bg-[var(--surface-raised)] p-3"><p className="text-[9px] font-extrabold uppercase text-[var(--text-faint)]">Before you finish</p><ul className="mt-2 space-y-1.5 text-[10px] leading-4 text-[var(--text-muted)]"><li>· Name the pattern you actually used.</li><li>· Capture the key invariant or missed clue.</li><li>· Mark recall if you could not reproduce it tomorrow.</li></ul></div><Button className="mt-6 w-full" size="lg" onClick={() => setLoggingProblemId(target.id)}><Check size={16} /> Finish and reflect</Button></div>
           )}
         </aside>
       </div>

@@ -6,51 +6,75 @@
 }
 
 :root {
-  --bg: #f3f6f3;
+  --bg: #f4f5f7;
   --surface: #ffffff;
-  --surface-raised: #fbfcfb;
-  --surface-muted: #edf1ed;
-  --text: #17231c;
-  --text-muted: #667169;
-  --text-faint: #8e9891;
-  --border: #dfe5e0;
-  --border-strong: #cbd4cd;
-  --accent: #187653;
-  --accent-strong: #0e5d40;
-  --accent-soft: #e2f3ea;
-  --amber: #b96d17;
-  --amber-soft: #fff1dc;
-  --blue: #2d70a8;
-  --blue-soft: #e4f0fa;
-  --red: #b84343;
-  --red-soft: #fbe9e8;
-  --violet: #7457a6;
-  --violet-soft: #eee9f7;
-  --shadow: 0 10px 30px rgba(28, 43, 34, 0.08);
+  --surface-raised: #f9fafb;
+  --surface-muted: #eceff3;
+  --text: #181a1d;
+  --text-muted: #626870;
+  --text-faint: #8d949d;
+  --border: #e0e4e9;
+  --border-strong: #c8ced6;
+  --accent: #cf4b37;
+  --accent-strong: #ad3828;
+  --accent-soft: #fff0ed;
+  --accent-contrast: #ffffff;
+  --green: #168363;
+  --green-strong: #0d684e;
+  --green-soft: #e4f5ef;
+  --amber: #a96806;
+  --amber-soft: #fff3d8;
+  --blue: #286bc5;
+  --blue-soft: #eaf2ff;
+  --red: #bd3f4b;
+  --red-soft: #fdecef;
+  --violet: #7051a6;
+  --violet-soft: #f1ecfa;
+  --sidebar-bg: #191b1e;
+  --sidebar-raised: #22252a;
+  --sidebar-text: #f4f4f1;
+  --sidebar-muted: #949aa3;
+  --sidebar-border: #2c3036;
+  --sidebar-active: #302825;
+  --sidebar-active-text: #ff9a86;
+  --button-shadow: 0 5px 14px rgba(170, 54, 37, 0.2);
+  --shadow: 0 14px 40px rgba(24, 27, 31, 0.09);
 }
 
 :root[data-theme='dark'] {
-  --bg: #101512;
-  --surface: #171d19;
-  --surface-raised: #1b221d;
-  --surface-muted: #202923;
-  --text: #edf3ee;
-  --text-muted: #9eaaa1;
-  --text-faint: #737e76;
-  --border: #2b352e;
-  --border-strong: #3a473e;
-  --accent: #4ec08c;
-  --accent-strong: #74d6a8;
-  --accent-soft: #17392b;
-  --amber: #e4a44c;
-  --amber-soft: #3a2a16;
-  --blue: #71afe0;
-  --blue-soft: #1d3242;
-  --red: #ec7d7d;
-  --red-soft: #422222;
-  --violet: #b09ad5;
-  --violet-soft: #302842;
-  --shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+  --bg: #111214;
+  --surface: #191b1e;
+  --surface-raised: #1e2125;
+  --surface-muted: #26292e;
+  --text: #f4f4f1;
+  --text-muted: #a7acb4;
+  --text-faint: #747b85;
+  --border: #2c3036;
+  --border-strong: #3b414a;
+  --accent: #ff745e;
+  --accent-strong: #ff9a87;
+  --accent-soft: #3b2421;
+  --accent-contrast: #211815;
+  --green: #55c5a0;
+  --green-strong: #86dbbe;
+  --green-soft: #19352d;
+  --amber: #efb14f;
+  --amber-soft: #3a2d19;
+  --blue: #77adf5;
+  --blue-soft: #1d3048;
+  --red: #f17d88;
+  --red-soft: #402327;
+  --violet: #bda0ee;
+  --violet-soft: #312742;
+  --sidebar-bg: #0d0e10;
+  --sidebar-raised: #17191c;
+  --sidebar-text: #f4f4f1;
+  --sidebar-muted: #858b94;
+  --sidebar-border: #23262b;
+  --sidebar-active: #342622;
+  --sidebar-active-text: #ff9a87;
+  --button-shadow: 0 7px 18px rgba(255, 97, 74, 0.16);
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -73,9 +97,9 @@ body {
   margin: 0;
   background-color: var(--bg);
   background-image:
-    linear-gradient(rgba(43, 81, 58, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(43, 81, 58, 0.025) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(color-mix(in srgb, var(--text) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--text) 2.5%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 button,
@@ -127,8 +151,9 @@ textarea {
   display: flex;
   height: 100vh;
   flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border-right: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+  background: var(--sidebar-bg);
 }
 
 .page-content {
@@ -144,7 +169,7 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--surface);
-  box-shadow: 0 1px 0 rgba(19, 34, 24, 0.02);
+  box-shadow: 0 1px 0 rgba(20, 22, 25, 0.025);
 }
 
 .panel-interactive {
@@ -253,6 +278,20 @@ textarea {
 
 .modal-panel {
   animation: modal-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+button[aria-label='Play animation'],
+button[aria-label='Pause animation'] {
+  color: #211815;
+  background: #ff745e;
+}
+
+input[aria-label='Animation frame'] {
+  accent-color: #ff745e;
+}
+
+[class~='bg-[#17231c]'] {
+  background: var(--sidebar-bg);
 }
 
 @media (max-width: 900px) {

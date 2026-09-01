@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { AlertTriangle, Check, Download, FileSpreadsheet, Moon, RotateCcw, Sun, Upload } from 'lucide-react'
+import { AlertTriangle, Check, Crosshair, Download, ExternalLink, FileSpreadsheet, Moon, RotateCcw, Sun, Upload } from 'lucide-react'
 import { Button, Modal, PageHeader } from '../components/ui'
 import { DataSafetyPanel } from '../components/DataSafetyPanel'
 import { useTracker } from '../context/useTracker'
@@ -36,7 +36,7 @@ export function SettingsPage() {
     const blob = new Blob([serializeState(state)], { type: 'application/json' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = `neetcode-250-backup-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `mithun-interview-studio-${new Date().toISOString().slice(0, 10)}.json`
     link.click()
     URL.revokeObjectURL(link.href)
     setMessage({ tone: 'success', text: 'Backup exported.' })
@@ -70,9 +70,10 @@ export function SettingsPage() {
 
   return (
     <div className="page-content max-w-5xl">
-      <PageHeader title="Settings" description="Preferences, revision cadence, and local data" />
+      <PageHeader title="Studio settings" description="Personal identity, training preferences, recall cadence, and local evidence." />
       {message && <div className={`mb-4 flex items-center gap-2 rounded-[6px] border px-4 py-3 text-xs font-semibold ${message.tone === 'success' ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]'}`}>{message.tone === 'success' ? <Check size={15} /> : <AlertTriangle size={15} />}{message.text}</div>}
       <div className="space-y-4">
+        <section className="panel overflow-hidden border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)]"><div className="grid gap-px bg-[var(--sidebar-border)] sm:grid-cols-[minmax(0,1fr)_260px]"><div className="bg-[var(--sidebar-bg)] p-5 sm:p-6"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-[7px] bg-[var(--accent)] text-[var(--accent-contrast)]"><Crosshair size={21} /></div><div><p className="text-[10px] font-extrabold uppercase text-[var(--sidebar-muted)]">Personal workspace</p><h2 className="mt-1 text-lg font-extrabold text-[var(--sidebar-text)]">{state.mentor.displayName}&apos;s Interview Studio</h2></div></div><p className="mt-4 max-w-xl text-xs leading-5 text-[var(--sidebar-muted)]">Built around your actual workflow: time on LeetCode, classify patterns here, strengthen Python, revisit failures, and measure independence.</p></div><div className="bg-[var(--sidebar-raised)] p-5"><p className="text-[9px] font-extrabold uppercase text-[var(--sidebar-muted)]">Connected practice profile</p><p className="mt-2 text-sm font-bold text-[var(--sidebar-text)]">@Mithuncoding</p><a href="https://leetcode.com/u/Mithuncoding/" target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--sidebar-active-text)]">Open LeetCode profile <ExternalLink size={12} /></a></div></div></section>
         <section className="panel overflow-hidden"><header className="border-b border-[var(--border)] px-5 py-4"><h2 className="text-sm font-bold">Preferences</h2></header><div className="divide-y divide-[var(--border)] px-5">
           <div className="grid gap-3 py-5 sm:grid-cols-[1fr_240px] sm:items-center"><div><label htmlFor="daily-goal" className="text-sm font-semibold">Daily problem goal</label><p className="mt-1 text-xs text-[var(--text-muted)]">Used for today&apos;s target and consistency score.</p></div><input id="daily-goal" type="number" min={1} max={25} className="input px-3 text-sm" value={state.settings.dailyGoal} onChange={(event) => updateSettings({ dailyGoal: Math.max(1, Math.min(25, Number(event.target.value) || 1)) })} /></div>
           <div className="grid gap-3 py-5 sm:grid-cols-[1fr_240px] sm:items-center"><div><label htmlFor="active-topic" className="text-sm font-semibold">Current active topic</label><p className="mt-1 text-xs text-[var(--text-muted)]">Prioritized by daily recommendations.</p></div><select id="active-topic" className="input px-3 text-sm" value={state.settings.activeTopic} onChange={(event) => updateSettings({ activeTopic: event.target.value })}>{TOPICS.map((topic) => <option key={topic}>{topic}</option>)}</select></div>

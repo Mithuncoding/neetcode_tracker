@@ -109,7 +109,7 @@ function addSummarySheet(workbook: ExcelJS.Workbook, state: AppState, exportedAt
     { width: 12 }, { width: 12 }, { width: 12 }, { width: 14 },
   ]
   worksheet.mergeCells('A1:H1')
-  worksheet.getCell('A1').value = 'MITHUN DSA ACADEMY'
+  worksheet.getCell('A1').value = "MITHUN'S INTERVIEW STUDIO"
   worksheet.getCell('A1').font = { name: 'Aptos Display', size: 22, bold: true, color: { argb: 'FFFFFFFF' } }
   worksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: HEADER_COLOR } }
   worksheet.getCell('A1').alignment = { vertical: 'middle' }
@@ -281,6 +281,8 @@ function addAttemptSheet(workbook: ExcelJS.Workbook, state: AppState) {
     { header: 'Confidence', key: 'confidence', width: 12 },
     { header: 'Duration', key: 'duration', width: 14, numFmt: '[h]:mm:ss' },
     { header: 'Revision Needed', key: 'revisionNeeded', width: 16 },
+    { header: 'Pattern Guess', key: 'patternGuess', width: 24 },
+    { header: 'Pattern Correct', key: 'patternCorrect', width: 16 },
     { header: 'Notes', key: 'notes', width: 48 },
     { header: 'Study Session ID', key: 'sessionId', width: 30 },
     { header: 'Attempt ID', key: 'attemptId', width: 30 },
@@ -299,6 +301,8 @@ function addAttemptSheet(workbook: ExcelJS.Workbook, state: AppState) {
       confidence: attempt.confidence,
       duration: toExcelDuration(attempt.durationSeconds),
       revisionNeeded: attempt.revisionNeeded ? 'Yes' : 'No',
+      patternGuess: attempt.patternGuess ?? '',
+      patternCorrect: attempt.patternCorrect === null || attempt.patternCorrect === undefined ? '' : attempt.patternCorrect ? 'Yes' : 'No',
       notes: attempt.notes,
       sessionId: attempt.sessionId ?? '',
       attemptId: attempt.id,
@@ -625,9 +629,9 @@ function addSettingsSheet(workbook: ExcelJS.Workbook, state: AppState, exportedA
 
 export function createTrackerWorkbook(state: AppState, exportedAt = new Date()) {
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'NeetCode 250 Tracker'
-  workbook.title = 'NeetCode 250 Progress Tracker'
-  workbook.subject = 'NeetCode roadmap progress and activity export'
+  workbook.creator = "Mithun's Interview Studio"
+  workbook.title = "Mithun's Interview Preparation Evidence"
+  workbook.subject = 'LeetCode sessions, pattern recognition, Python, recall, and interview preparation evidence'
   workbook.created = exportedAt
   workbook.modified = exportedAt
   workbook.calcProperties.fullCalcOnLoad = true
@@ -655,7 +659,7 @@ export async function downloadTrackerWorkbook(state: AppState) {
   const url = URL.createObjectURL(new Blob([buffer], { type: EXCEL_MIME_TYPE }))
   const link = document.createElement('a')
   link.href = url
-  link.download = `neetcode-250-tracker-${exportedAt.toISOString().slice(0, 10)}.xlsx`
+  link.download = `mithun-interview-studio-${exportedAt.toISOString().slice(0, 10)}.xlsx`
   document.body.appendChild(link)
   link.click()
   link.remove()
