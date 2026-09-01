@@ -14,9 +14,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['app-icon.svg'],
       manifest: {
-        name: 'NeetCode 250 Tracker',
-        short_name: 'NC 250',
-        description: 'A private, offline-first NeetCode 250 progress tracker.',
+        name: 'Mithun DSA Academy',
+        short_name: 'DSA Academy',
+        description: 'An offline-first personal DSA mentor, curriculum, and mastery tracker.',
         theme_color: '#17231c',
         background_color: '#f3f6f3',
         display: 'standalone',
@@ -34,6 +34,17 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,woff2,json}'],
         navigateFallback: 'index.html',
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/pyodide\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'pyodide-runtime',
+              expiration: { maxEntries: 12, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

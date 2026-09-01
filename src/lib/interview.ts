@@ -44,27 +44,51 @@ export function selectInterviewProblems(
 
 export function getInterviewSessionScore(session: InterviewSession) {
   if (!session.results.length) {
-    return { overall: 0, coding: 0, explanation: 0, communication: 0, independentRate: 0 }
+    return { overall: 0, understanding: 0, patternRecognition: 0, approach: 0, coding: 0, complexity: 0, explanation: 0, communication: 0, independentRate: 0, weakest: 'Not measured' }
   }
-  const average = (key: 'codingScore' | 'explanationScore' | 'communicationScore') =>
+  const average = (key: 'understandingScore' | 'patternRecognitionScore' | 'approachScore' | 'codingScore' | 'complexityScore' | 'explanationScore' | 'communicationScore') =>
     session.results.reduce((total, result) => total + result[key], 0) / session.results.length
+  const understanding = average('understandingScore')
+  const patternRecognition = average('patternRecognitionScore')
+  const approach = average('approachScore')
   const coding = average('codingScore')
+  const complexity = average('complexityScore')
   const explanation = average('explanationScore')
   const communication = average('communicationScore')
-  const independentRate = session.results.filter((result) => result.outcome === 'independent').length /
+  const independentRate = session.results.filter((result) => result.outcome === 'independent' && result.hintsUsed === 0).length /
     session.results.length
   const overall = clamp(Math.round(
-    (coding / 5) * 35 +
-    (explanation / 5) * 30 +
-    (communication / 5) * 20 +
-    independentRate * 15,
+    (understanding / 5) * 10 +
+    (patternRecognition / 5) * 15 +
+    (approach / 5) * 15 +
+    (coding / 5) * 20 +
+    (complexity / 5) * 10 +
+    (explanation / 5) * 10 +
+    (communication / 5) * 10 +
+    independentRate * 10,
   ), 0, 100)
+  const rounded = (value: number) => Math.round(value * 10) / 10
+  const dimensions = [
+    ['Problem understanding', understanding],
+    ['Pattern recognition', patternRecognition],
+    ['Approach', approach],
+    ['Coding', coding],
+    ['Complexity', complexity],
+    ['Explanation', explanation],
+    ['Communication', communication],
+  ] as const
+  const weakest = [...dimensions].sort((left, right) => left[1] - right[1])[0][0]
   return {
     overall,
-    coding: Math.round(coding * 10) / 10,
-    explanation: Math.round(explanation * 10) / 10,
-    communication: Math.round(communication * 10) / 10,
+    understanding: rounded(understanding),
+    patternRecognition: rounded(patternRecognition),
+    approach: rounded(approach),
+    coding: rounded(coding),
+    complexity: rounded(complexity),
+    explanation: rounded(explanation),
+    communication: rounded(communication),
     independentRate: Math.round(independentRate * 100),
+    weakest,
   }
 }
 

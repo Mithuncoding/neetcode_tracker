@@ -36,7 +36,12 @@ import {
   type TrackerContextValue,
   type StartInterviewInput,
   type RecordInterviewInput,
+  type CompleteDiagnosticInput,
+  type RecordGuidedSessionInput,
+  type RecordRecognitionInput,
+  type RecordAlgorithmLabInput,
 } from './tracker-context'
+import type { LeetCodeProfileSnapshot } from '../types'
 
 type Action =
   | { type: 'log-attempt'; payload: LogAttemptInput; now: string }
@@ -54,6 +59,15 @@ type Action =
   | { type: 'start-interview'; id: string; input: StartInterviewInput; problemIds: string[]; now: string }
   | { type: 'record-interview'; input: RecordInterviewInput; now: string }
   | { type: 'finish-interview'; id: string; abandoned: boolean; now: string }
+  | { type: 'complete-diagnostic'; input: CompleteDiagnosticInput; now: string }
+  | { type: 'record-recognition'; input: RecordRecognitionInput; now: string }
+  | { type: 'record-guided-session'; input: RecordGuidedSessionInput; now: string }
+  | { type: 'save-leetcode-profile'; profile: LeetCodeProfileSnapshot; now: string }
+  | { type: 'merge-leetcode-matches'; problemIds: string[]; now: string }
+  | { type: 'start-year-plan'; now: string }
+  | { type: 'toggle-plan-week'; week: number; now: string }
+  | { type: 'set-mistake-resolved'; mistakeId: string; resolved: boolean; now: string }
+  | { type: 'record-algorithm-lab'; input: RecordAlgorithmLabInput; now: string }
   | { type: 'import-state'; state: AppState }
   | { type: 'reset-progress'; now: string }
   | { type: 'reset-analytics'; now: string }
@@ -77,6 +91,28 @@ function unlockAchievements(state: AppState, now: string) {
     (problem) => problem.difficulty === 'Hard' && completedIds.has(problem.id),
   ).length
   const successfulRevisions = state.revisions.filter((revision) => revision.result === 'recalled').length
+  const correctRecognitions = state.mentor.recognitionAttempts.filter((attempt) => attempt.correct).length
+  const blindRecalls = state.mentor.guidedSessions.filter((session) =>
+    session.mode === 'blind' && session.implementationCompleted && session.hintLevelReached === 0,
+  ).length
+  const strongExplanations = state.mentor.guidedSessions.filter((session) =>
+    (session.explanationScore ?? 0) >= 3,
+  ).length
+  const mediumIds = new Set(ROADMAP_PROBLEMS.filter((problem) => problem.difficulty === 'Medium').map((problem) => problem.id))
+  const independentMediums = new Set(state.attempts.filter((attempt) =>
+    attempt.outcome === 'independent' && mediumIds.has(attempt.problemId),
+  ).map((attempt) => attempt.problemId)).size
+  const independentByPattern = new Map<string, Set<string>>()
+  state.attempts.filter((attempt) => attempt.outcome === 'independent').forEach((attempt) => {
+    const problem = ROADMAP_PROBLEMS.find((item) => item.id === attempt.problemId)
+    if (!problem) return
+    const pattern = problem.topic
+    const solved = independentByPattern.get(pattern) ?? new Set<string>()
+    solved.add(problem.id)
+    independentByPattern.set(pattern, solved)
+  })
+  const completedInterviews = state.interviewSessions.filter((session) => session.status === 'completed').length
+  const completedAlgorithmLabs = Object.keys(state.mentor.algorithmLab).length
   const { longest } = getStreaks(state)
   const unlocked = new Set<string>()
 
@@ -91,6 +127,15 @@ function unlockAchievements(state: AppState, now: string) {
   if (hard >= 1) unlocked.add('first-hard')
   if (hard >= 10) unlocked.add('hard-10')
   if (successfulRevisions >= 25) unlocked.add('revision-master')
+  if (correctRecognitions >= 20) unlocked.add('pattern-hunter')
+  if ([...independentByPattern.values()].some((problemIds) => problemIds.size >= 5)) unlocked.add('pattern-master')
+  if (blindRecalls >= 10) unlocked.add('recall-master')
+  if (independentMediums >= 5) unlocked.add('medium-breakthrough')
+  if (strongExplanations >= 10) unlocked.add('explain-10')
+  if (completedInterviews >= 10) unlocked.add('interview-ready')
+  if (completedAlgorithmLabs >= 1) unlocked.add('visual-first')
+  if (completedAlgorithmLabs >= 10) unlocked.add('visual-10')
+  if (completedAlgorithmLabs >= 30) unlocked.add('visual-30')
 
   return {
     ...state,
@@ -105,6 +150,181 @@ function unlockAchievements(state: AppState, now: string) {
 function reducer(state: AppState, action: Action): AppState {
   if (action.type === 'import-state') return action.state
   if (action.type === 'reset-all') return createInitialState()
+
+  if (action.type === 'complete-diagnostic') {
+    return {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        onboardingComplete: true,
+        currentLevel: action.input.recommendedLevel,
+        diagnostic: {
+          completedAt: action.now,
+          recommendedLevel: action.input.recommendedLevel,
+          answers: action.input.answers,
+        },
+      },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'record-recognition') {
+    const nextState: AppState = {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        recognitionAttempts: [
+          ...state.mentor.recognitionAttempts,
+          { id: uid('recognition'), ...action.input, createdAt: action.now },
+        ],
+      },
+      updatedAt: action.now,
+    }
+    return unlockAchievements(nextState, action.now)
+  }
+
+  if (action.type === 'record-guided-session') {
+    const session = {
+      id: uid('guided'),
+      ...action.input,
+      completedAt: action.now,
+    }
+    const inferredFailure = action.input.failureReason ??
+      (action.input.recognizedPattern === false
+        ? 'pattern-recognition'
+        : action.input.codeScore !== null && action.input.codeScore < 50
+          ? 'implementation'
+          : (action.input.explanationScore ?? 5) <= 2
+            ? 'problem-understanding'
+            : null)
+    const inferredNote = action.input.reflection.trim() ||
+      (inferredFailure === 'pattern-recognition'
+        ? 'The committed pattern guess did not match the roadmap pattern.'
+        : inferredFailure === 'implementation'
+          ? `Static Python assessment scored ${action.input.codeScore ?? 0}%. Review the failed checks.`
+          : inferredFailure === 'problem-understanding'
+            ? 'The explanation did not yet state enough reasoning evidence.'
+            : '')
+    const mistake = inferredFailure
+      ? {
+          id: uid('mistake'),
+          problemId: action.input.problemId,
+          category: inferredFailure,
+          note: inferredNote,
+          createdAt: action.now,
+          resolvedAt: null,
+        }
+      : null
+    const nextState: AppState = {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        guidedSessions: [...state.mentor.guidedSessions, session],
+        mistakes: mistake ? [...state.mentor.mistakes, mistake] : state.mentor.mistakes,
+      },
+      updatedAt: action.now,
+    }
+    return unlockAchievements(nextState, action.now)
+  }
+
+  if (action.type === 'save-leetcode-profile') {
+    return {
+      ...state,
+      mentor: { ...state.mentor, leetcodeProfile: action.profile },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'merge-leetcode-matches') {
+    const current = state.mentor.leetcodeProfile
+    const matchedProblemIds = [...new Set([...(current?.matchedProblemIds ?? []), ...action.problemIds])]
+    return {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        leetcodeProfile: current
+          ? { ...current, matchedProblemIds }
+          : {
+              username: 'Mithuncoding',
+              syncedAt: action.now,
+              ranking: null,
+              totalSolved: matchedProblemIds.length,
+              easySolved: 0,
+              mediumSolved: 0,
+              hardSolved: 0,
+              acceptanceRate: null,
+              activeDays: null,
+              maxStreak: null,
+              primaryLanguage: 'Python3',
+              matchedProblemIds,
+              source: 'https://leetcode.com/u/Mithuncoding/',
+            },
+      },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'start-year-plan') {
+    return {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        yearPlanStartedAt: state.mentor.yearPlanStartedAt ?? action.now,
+      },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'toggle-plan-week') {
+    const completed = new Set(state.mentor.completedPlanWeeks)
+    if (completed.has(action.week)) completed.delete(action.week)
+    else completed.add(action.week)
+    return {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        completedPlanWeeks: [...completed].sort((left, right) => left - right),
+      },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'set-mistake-resolved') {
+    return {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        mistakes: state.mentor.mistakes.map((mistake) =>
+          mistake.id === action.mistakeId
+            ? { ...mistake, resolvedAt: action.resolved ? action.now : null }
+            : mistake,
+        ),
+      },
+      updatedAt: action.now,
+    }
+  }
+
+  if (action.type === 'record-algorithm-lab') {
+    const previous = state.mentor.algorithmLab[action.input.sceneId]
+    const nextState: AppState = {
+      ...state,
+      mentor: {
+        ...state.mentor,
+        algorithmLab: {
+          ...state.mentor.algorithmLab,
+          [action.input.sceneId]: {
+            sceneId: action.input.sceneId,
+            completedAt: action.now,
+            framesViewed: Math.max(previous?.framesViewed ?? 0, action.input.framesViewed),
+            correctPredictions: Math.max(previous?.correctPredictions ?? 0, action.input.correctPredictions),
+            totalPredictions: Math.max(previous?.totalPredictions ?? 0, action.input.totalPredictions),
+          },
+        },
+      },
+      updatedAt: action.now,
+    }
+    return unlockAchievements(nextState, action.now)
+  }
 
   if (action.type === 'start-timer') {
     const existingProgress = state.progress[action.problemId] ?? getDefaultProgress(action.problemId)
@@ -424,9 +644,14 @@ function reducer(state: AppState, action: Action): AppState {
                   problemId: action.input.problemId,
                   durationSeconds: action.input.durationSeconds,
                   outcome: action.input.outcome,
+                  understandingScore: action.input.understandingScore,
+                  patternRecognitionScore: action.input.patternRecognitionScore,
+                  approachScore: action.input.approachScore,
                   explanationScore: action.input.explanationScore,
                   codingScore: action.input.codingScore,
+                  complexityScore: action.input.complexityScore,
                   communicationScore: action.input.communicationScore,
+                  hintsUsed: action.input.hintsUsed,
                   notes: action.input.notes,
                 },
               ],
@@ -438,7 +663,7 @@ function reducer(state: AppState, action: Action): AppState {
   }
 
   if (action.type === 'finish-interview') {
-    return {
+    const nextState: AppState = {
       ...state,
       interviewSessions: state.interviewSessions.map((session) =>
         session.id === action.id
@@ -452,6 +677,7 @@ function reducer(state: AppState, action: Action): AppState {
       activeTimer: null,
       updatedAt: action.now,
     }
+    return unlockAchievements(nextState, action.now)
   }
 
   if (action.type === 'reset-progress') {
@@ -464,6 +690,13 @@ function reducer(state: AppState, action: Action): AppState {
       interviewSessions: [],
       activeTimer: null,
       achievements: createInitialState().achievements,
+      mentor: {
+        ...state.mentor,
+        guidedSessions: [],
+        recognitionAttempts: [],
+        mistakes: [],
+        algorithmLab: {},
+      },
       updatedAt: action.now,
     }
   }
@@ -483,6 +716,13 @@ function reducer(state: AppState, action: Action): AppState {
       sessions: [],
       interviewSessions: [],
       activeTimer: null,
+      mentor: {
+        ...state.mentor,
+        guidedSessions: [],
+        recognitionAttempts: [],
+        mistakes: [],
+        algorithmLab: {},
+      },
       updatedAt: action.now,
     }
   }
@@ -590,7 +830,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
           attempts: 1,
           confidence: input.codingScore,
           notes: input.notes,
-          revisionNeeded: input.outcome !== 'independent' || input.explanationScore <= 2,
+          revisionNeeded: input.outcome !== 'independent' || input.hintsUsed > 0 || input.explanationScore <= 2 || input.patternRecognitionScore <= 2,
           durationSeconds: input.durationSeconds,
           sessionId: null,
         },
@@ -600,6 +840,15 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     },
     finishInterview: (id, abandoned = false) =>
       dispatch({ type: 'finish-interview', id, abandoned, now: now() }),
+    completeDiagnostic: (input) => dispatch({ type: 'complete-diagnostic', input, now: now() }),
+    recordRecognition: (input) => dispatch({ type: 'record-recognition', input, now: now() }),
+    recordGuidedSession: (input) => dispatch({ type: 'record-guided-session', input, now: now() }),
+    saveLeetCodeProfile: (profile) => dispatch({ type: 'save-leetcode-profile', profile, now: now() }),
+    mergeLeetCodeMatches: (problemIds) => dispatch({ type: 'merge-leetcode-matches', problemIds, now: now() }),
+    startYearPlan: () => dispatch({ type: 'start-year-plan', now: now() }),
+    togglePlanWeek: (week) => dispatch({ type: 'toggle-plan-week', week, now: now() }),
+    setMistakeResolved: (mistakeId, resolved) => dispatch({ type: 'set-mistake-resolved', mistakeId, resolved, now: now() }),
+    recordAlgorithmLab: (input) => dispatch({ type: 'record-algorithm-lab', input, now: now() }),
     importState: (nextState) => dispatch({ type: 'import-state', state: nextState }),
     resetProgress: () => dispatch({ type: 'reset-progress', now: now() }),
     resetAnalytics: () => dispatch({ type: 'reset-analytics', now: now() }),

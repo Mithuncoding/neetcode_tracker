@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import {
   ArrowRight,
-  CalendarCheck,
+  BrainCircuit,
   Check,
   Clock3,
   Flame,
   Focus,
   Gauge,
   RotateCcw,
+  ScanSearch,
   Target,
   TrendingUp,
 } from 'lucide-react'
@@ -27,7 +28,7 @@ import {
   getStats,
   getTopicStats,
 } from '../lib/analytics'
-import { getReadinessScore } from '../lib/interview'
+import { getDailyMentorMission, getMentorReadiness } from '../lib/mentor'
 import { getPlannerSummary } from '../lib/planner'
 import { formatDuration } from '../lib/utils'
 
@@ -64,7 +65,8 @@ export function DashboardPage() {
   const activity = getDailyActivity(state)
   const projection = getCompletionProjection(state, ROADMAP_PROBLEMS.length)
   const planner = getPlannerSummary(state, ROADMAP_PROBLEMS)
-  const readiness = getReadinessScore(state.interviewSessions)
+  const mentorReadiness = getMentorReadiness(state, ROADMAP_PROBLEMS)
+  const mentorMission = getDailyMentorMission(state, ROADMAP_PROBLEMS)
   const scores = getScores(state, ROADMAP_PROBLEMS)
   const topicStats = getTopicStats(state, ROADMAP_PROBLEMS)
   const activeTopic = topicStats.find((topic) => topic.topic === state.settings.activeTopic)
@@ -75,8 +77,13 @@ export function DashboardPage() {
     <div className="page-content">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div><h1 className="text-[28px] font-bold leading-tight">Today</h1><p className="mt-1 text-sm text-[var(--text-muted)]">{format(new Date(), 'EEEE, MMMM d')}</p></div>
-        <div className="flex gap-2"><Button variant="secondary" onClick={() => navigate('/interview')}><Gauge size={16} /> Mock {readiness.score || ''}</Button><Button onClick={() => navigate('/focus')}><Focus size={16} /> Start today&apos;s session</Button></div>
+        <div className="flex gap-2"><Button variant="secondary" onClick={() => navigate('/focus')}><Focus size={16} /> Focus</Button><Button onClick={() => navigate('/mentor')}><BrainCircuit size={16} /> Open Mentor</Button></div>
       </header>
+
+      <section className="panel mb-4 overflow-hidden">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4"><div><div className="flex items-center gap-2"><Badge tone="green">Today&apos;s mission</Badge><span className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Skill before count</span></div><h2 className="mt-2 text-base font-bold">Train the weakest link, then remove support.</h2></div><Button size="sm" onClick={() => mentorMission[0] && navigate(mentorMission[0].route)}>Start first task <ArrowRight size={14} /></Button></header>
+        <div className="grid gap-px bg-[var(--border)] sm:grid-cols-2 xl:grid-cols-3">{mentorMission.slice(0, 6).map((task, index) => <button key={task.id} type="button" onClick={() => navigate(task.route)} className="group flex min-h-20 items-center gap-3 bg-[var(--surface)] px-5 py-4 text-left hover:bg-[var(--surface-raised)]"><span className="metric-number flex h-7 w-7 shrink-0 items-center justify-center rounded-[5px] bg-[var(--surface-muted)] font-mono text-[10px] font-bold text-[var(--text-muted)]">{String(index + 1).padStart(2, '0')}</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{task.label}</p><p className="mt-1 truncate text-[10px] text-[var(--text-faint)]">{task.detail}</p></div><ArrowRight size={13} className="shrink-0 text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" /></button>)}</div>
+      </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.25fr_.8fr_.8fr]">
         <article className="panel flex min-h-56 flex-col justify-between gap-6 p-5 sm:flex-row sm:items-center sm:p-6">
@@ -130,14 +137,14 @@ export function DashboardPage() {
       </section>
 
       <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
-        <MiniStat icon={Check} label="Total solved" value={stats.completed} />
-        <MiniStat icon={CalendarCheck} label="This week" value={stats.solvedThisWeek} />
-        <MiniStat icon={TrendingUp} label="This month" value={stats.solvedThisMonth} />
+        <MiniStat icon={Check} label="Problems solved" value={stats.completed} />
         <MiniStat icon={Target} label="Independent" value={stats.independent} />
+        <MiniStat icon={ScanSearch} label="Recognition" value={`${mentorReadiness.patternRecognition}%`} />
+        <MiniStat icon={TrendingUp} label="Medium independence" value={`${mentorReadiness.mediumSolving}%`} />
+        <MiniStat icon={RotateCcw} label="Revision retention" value={`${mentorReadiness.recall}%`} />
         <MiniStat icon={Clock3} label="Average time" value={formatDuration(stats.averageSeconds, true)} />
-        <MiniStat icon={Gauge} label="Consistency" value={`${scores.consistency}%`} />
         <MiniStat icon={Flame} label="Longest streak" value={stats.longestStreak} />
-        <MiniStat icon={Gauge} label="Mock readiness" value={readiness.score ? `${readiness.score}%` : '-'} />
+        <MiniStat icon={Gauge} label="DSA readiness" value={`${mentorReadiness.score}%`} />
       </section>
 
       <section className="panel mt-4 p-5">

@@ -1,6 +1,7 @@
 import type { AppState } from '../types'
 
-export const BACKUP_PREFIX = 'neetcode-250-tracker:backup:v2:'
+export const BACKUP_PREFIX = 'neetcode-250-tracker:backup:v3:'
+const LEGACY_BACKUP_PREFIX = 'neetcode-250-tracker:backup:v2:'
 
 interface BackupEnvelope {
   savedAt: string
@@ -12,7 +13,7 @@ function readEnvelope(index: number): BackupEnvelope | null {
   if (!value) return null
   try {
     const parsed = JSON.parse(value) as BackupEnvelope
-    return parsed?.state?.version === 2 ? parsed : null
+    return parsed?.state?.version === 3 ? parsed : null
   } catch {
     return null
   }
@@ -60,8 +61,20 @@ export function readBackup(index: number) {
   return readEnvelope(index)?.state ?? null
 }
 
+export function readLegacyBackup(index: number) {
+  const value = localStorage.getItem(`${LEGACY_BACKUP_PREFIX}${index}`)
+  if (!value) return null
+  try {
+    const parsed = JSON.parse(value) as { state?: unknown }
+    return parsed.state ?? null
+  } catch {
+    return null
+  }
+}
+
 export function clearBackups() {
   for (let index = 0; index < 10; index += 1) {
     localStorage.removeItem(`${BACKUP_PREFIX}${index}`)
+    localStorage.removeItem(`${LEGACY_BACKUP_PREFIX}${index}`)
   }
 }

@@ -4,7 +4,13 @@ import type {
   ProblemStatus,
   RevisionResult,
   Difficulty,
+  DiagnosticAnswer,
+  FailureReason,
+  HintLevel,
   InterviewResult,
+  LearningMode,
+  LeetCodeProfileSnapshot,
+  MentorLevel,
   SessionGoal,
   SolveOutcome,
   UserSettings,
@@ -40,6 +46,44 @@ export interface RecordInterviewInput extends InterviewResult {
   sessionId: string
 }
 
+export interface CompleteDiagnosticInput {
+  answers: DiagnosticAnswer[]
+  recommendedLevel: MentorLevel
+}
+
+export interface RecordRecognitionInput {
+  problemId: string
+  selectedPattern: string
+  expectedPattern: string
+  correct: boolean
+  confidence: 1 | 2 | 3 | 4 | 5
+}
+
+export interface RecordGuidedSessionInput {
+  problemId: string
+  mode: LearningMode
+  startedAt: string
+  hintLevelReached: HintLevel
+  recognizedPattern: boolean | null
+  bruteForceCaptured: boolean
+  understandingScore: number | null
+  derivationScore: number | null
+  implementationCompleted: boolean
+  code: string
+  codeScore: number | null
+  explanation: string
+  explanationScore: 1 | 2 | 3 | 4 | 5 | null
+  failureReason: FailureReason | null
+  reflection: string
+}
+
+export interface RecordAlgorithmLabInput {
+  sceneId: string
+  framesViewed: number
+  correctPredictions: number
+  totalPredictions: number
+}
+
 export interface TrackerContextValue {
   state: AppState
   recoveredFromBackup: boolean
@@ -62,6 +106,15 @@ export interface TrackerContextValue {
   startInterview: (input: StartInterviewInput) => string | null
   recordInterviewResult: (input: RecordInterviewInput) => void
   finishInterview: (id: string, abandoned?: boolean) => void
+  completeDiagnostic: (input: CompleteDiagnosticInput) => void
+  recordRecognition: (input: RecordRecognitionInput) => void
+  recordGuidedSession: (input: RecordGuidedSessionInput) => void
+  saveLeetCodeProfile: (profile: LeetCodeProfileSnapshot) => void
+  mergeLeetCodeMatches: (problemIds: string[]) => void
+  startYearPlan: () => void
+  togglePlanWeek: (week: number) => void
+  setMistakeResolved: (mistakeId: string, resolved: boolean) => void
+  recordAlgorithmLab: (input: RecordAlgorithmLabInput) => void
   importState: (state: AppState) => void
   resetProgress: () => void
   resetAnalytics: () => void

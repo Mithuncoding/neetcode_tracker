@@ -101,7 +101,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
         <h1 className="text-[28px] font-bold leading-tight tracking-normal text-[var(--text)]">{title}</h1>
         {description && <p className="mt-1 text-sm text-[var(--text-muted)]">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   )
 }

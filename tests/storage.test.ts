@@ -35,18 +35,24 @@ function createLegacyState() {
 }
 
 describe('state migration and recovery', () => {
-  it('migrates a version-1 export to version 2 defaults', () => {
+  it('migrates a version-1 export to version 3 defaults', () => {
     const migrated = parseImportedState(JSON.stringify(createLegacyState()))
-    expect(migrated.version).toBe(2)
+    expect(migrated.version).toBe(3)
     expect(migrated.settings.revisionMode).toBe('adaptive')
     expect(migrated.settings.planner.mode).toBe('balanced')
     expect(migrated.progress['0001-two-sum'].revisionEase).toBe(2.5)
+    expect(migrated.mentor.displayName).toBe('Mithun')
+    expect(migrated.mentor.guidedSessions).toEqual([])
+    expect(migrated.mentor.yearPlanStartedAt).toBeNull()
+    expect(migrated.mentor.completedPlanWeeks).toEqual([])
+    expect(migrated.mentor.algorithmLab).toEqual({})
+    expect(migrated.achievements.some((achievement) => achievement.id === 'pattern-hunter')).toBe(true)
   })
 
   it('loads a legacy localStorage save', () => {
     localStorage.setItem('neetcode-250-tracker:v1', JSON.stringify(createLegacyState()))
     const loaded = loadState()
-    expect(loaded.state.version).toBe(2)
+    expect(loaded.state.version).toBe(3)
     expect(loaded.state.progress['0001-two-sum'].solvedAt).toBeTruthy()
   })
 
@@ -56,7 +62,7 @@ describe('state migration and recovery', () => {
     localStorage.setItem(STORAGE_KEY, '{bad-json')
     const loaded = loadState()
     expect(loaded.recovered).toBe(true)
-    expect(loaded.state.version).toBe(2)
+    expect(loaded.state.version).toBe(3)
   })
 
   it('keeps newest rotating snapshots first', () => {

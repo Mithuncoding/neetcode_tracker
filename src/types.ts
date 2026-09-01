@@ -22,6 +22,17 @@ export type SessionGoal = 1 | 2 | 3 | 5 | 'revision' | number
 export type PlannerMode = 'balanced' | 'foundation' | 'interview'
 export type RevisionMode = 'adaptive' | 'fixed'
 export type InterviewStatus = 'active' | 'completed' | 'abandoned'
+export type MentorLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+export type HintLevel = 0 | 1 | 2 | 3 | 4 | 5
+export type LearningMode = 'guided' | 'blind' | 'recognition' | 'medium-trainer'
+export type FailureReason =
+  | 'problem-understanding'
+  | 'pattern-recognition'
+  | 'wrong-approach'
+  | 'implementation'
+  | 'edge-case'
+  | 'complexity'
+  | 'time'
 
 export interface RoadmapProblem {
   id: string
@@ -96,9 +107,14 @@ export interface InterviewResult {
   problemId: string
   durationSeconds: number
   outcome: Exclude<SolveOutcome, 'revision'>
+  understandingScore: 1 | 2 | 3 | 4 | 5
+  patternRecognitionScore: 1 | 2 | 3 | 4 | 5
+  approachScore: 1 | 2 | 3 | 4 | 5
   explanationScore: 1 | 2 | 3 | 4 | 5
   codingScore: 1 | 2 | 3 | 4 | 5
+  complexityScore: 1 | 2 | 3 | 4 | 5
   communicationScore: 1 | 2 | 3 | 4 | 5
+  hintsUsed: number
   notes: string
 }
 
@@ -138,6 +154,95 @@ export interface Achievement {
   unlockedAt: string | null
 }
 
+export interface GuidedProblemSession {
+  id: string
+  problemId: string
+  mode: LearningMode
+  startedAt: string
+  completedAt: string | null
+  hintLevelReached: HintLevel
+  recognizedPattern: boolean | null
+  bruteForceCaptured: boolean
+  understandingScore: number | null
+  derivationScore: number | null
+  implementationCompleted: boolean
+  code: string
+  codeScore: number | null
+  explanation: string
+  explanationScore: 1 | 2 | 3 | 4 | 5 | null
+  failureReason: FailureReason | null
+  reflection: string
+}
+
+export interface PatternRecognitionAttempt {
+  id: string
+  problemId: string
+  selectedPattern: string
+  expectedPattern: string
+  correct: boolean
+  confidence: 1 | 2 | 3 | 4 | 5
+  createdAt: string
+}
+
+export interface MistakeRecord {
+  id: string
+  problemId: string
+  category: FailureReason
+  note: string
+  createdAt: string
+  resolvedAt: string | null
+}
+
+export interface DiagnosticAnswer {
+  questionId: string
+  pattern: string
+  correct: boolean
+}
+
+export interface DiagnosticResult {
+  completedAt: string
+  recommendedLevel: MentorLevel
+  answers: DiagnosticAnswer[]
+}
+
+export interface LeetCodeProfileSnapshot {
+  username: string
+  syncedAt: string
+  ranking: number | null
+  totalSolved: number
+  easySolved: number
+  mediumSolved: number
+  hardSolved: number
+  acceptanceRate: number | null
+  activeDays: number | null
+  maxStreak: number | null
+  primaryLanguage: string | null
+  matchedProblemIds: string[]
+  source: string
+}
+
+export interface AlgorithmLabRecord {
+  sceneId: string
+  completedAt: string
+  framesViewed: number
+  correctPredictions: number
+  totalPredictions: number
+}
+
+export interface MentorState {
+  displayName: string
+  onboardingComplete: boolean
+  currentLevel: MentorLevel
+  diagnostic: DiagnosticResult | null
+  yearPlanStartedAt: string | null
+  completedPlanWeeks: number[]
+  algorithmLab: Record<string, AlgorithmLabRecord>
+  guidedSessions: GuidedProblemSession[]
+  recognitionAttempts: PatternRecognitionAttempt[]
+  mistakes: MistakeRecord[]
+  leetcodeProfile: LeetCodeProfileSnapshot | null
+}
+
 export interface DailyActivity {
   date: string
   attemptedProblemIds: string[]
@@ -146,7 +251,7 @@ export interface DailyActivity {
 }
 
 export interface AppState {
-  version: 2
+  version: 3
   progress: Record<string, ProblemProgress>
   attempts: SolveAttempt[]
   revisions: RevisionRecord[]
@@ -155,6 +260,7 @@ export interface AppState {
   activeTimer: ActiveTimer | null
   settings: UserSettings
   achievements: Achievement[]
+  mentor: MentorState
   createdAt: string
   updatedAt: string
 }

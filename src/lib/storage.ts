@@ -2,10 +2,12 @@ import { z } from 'zod'
 import { createAchievements } from '../data/achievements'
 import { ROADMAP_PROBLEMS } from '../data/problems'
 import { PROBLEM_STATUSES, type AppState } from '../types'
-import { clearBackups, readBackup, rotateBackups } from './backups'
+import { clearBackups, readBackup, readLegacyBackup, rotateBackups } from './backups'
 
-export const STORAGE_KEY = 'neetcode-250-tracker:v2'
-export const BACKUP_KEY = 'neetcode-250-tracker:backup:v2'
+export const STORAGE_KEY = 'neetcode-250-tracker:v3'
+export const BACKUP_KEY = 'neetcode-250-tracker:backup:v3'
+const LEGACY_V2_STORAGE_KEY = 'neetcode-250-tracker:v2'
+const LEGACY_V2_BACKUP_KEY = 'neetcode-250-tracker:backup:v2'
 const LEGACY_STORAGE_KEY = 'neetcode-250-tracker:v1'
 const LEGACY_BACKUP_KEY = 'neetcode-250-tracker:backup:v1'
 
@@ -105,9 +107,14 @@ const interviewResultSchema = z.object({
   problemId: z.string(),
   durationSeconds: z.number().nonnegative(),
   outcome: z.enum(['independent', 'hint', 'solution', 'unable']),
+  understandingScore: confidenceSchema.default(3),
+  patternRecognitionScore: confidenceSchema.default(3),
+  approachScore: confidenceSchema.default(3),
   explanationScore: confidenceSchema,
   codingScore: confidenceSchema,
+  complexityScore: confidenceSchema.default(3),
   communicationScore: confidenceSchema,
+  hintsUsed: z.number().int().min(0).max(2).default(0),
   notes: z.string(),
 })
 const interviewSessionSchema = z.object({
@@ -127,8 +134,112 @@ const plannerSchema = z.object({
   mode: z.enum(['balanced', 'foundation', 'interview']),
 })
 
+const failureReasonSchema = z.enum([
+  'problem-understanding',
+  'pattern-recognition',
+  'wrong-approach',
+  'implementation',
+  'edge-case',
+  'complexity',
+  'time',
+])
+const mentorLevelSchema = z.union([
+  z.literal(0), z.literal(1), z.literal(2), z.literal(3),
+  z.literal(4), z.literal(5), z.literal(6), z.literal(7),
+])
+const hintLevelSchema = z.union([
+  z.literal(0), z.literal(1), z.literal(2),
+  z.literal(3), z.literal(4), z.literal(5),
+])
+const mentorSchema = z.object({
+  displayName: z.string().default('Mithun'),
+  onboardingComplete: z.boolean().default(false),
+  currentLevel: mentorLevelSchema.default(1),
+  diagnostic: z.object({
+    completedAt: z.string(),
+    recommendedLevel: mentorLevelSchema,
+    answers: z.array(z.object({
+      questionId: z.string(),
+      pattern: z.string(),
+      correct: z.boolean(),
+    })),
+  }).nullable().default(null),
+  yearPlanStartedAt: z.string().nullable().default(null),
+  completedPlanWeeks: z.array(z.number().int().min(1).max(52)).default([]),
+  algorithmLab: z.record(z.string(), z.object({
+    sceneId: z.string(),
+    completedAt: z.string(),
+    framesViewed: z.number().int().positive(),
+    correctPredictions: z.number().int().nonnegative(),
+    totalPredictions: z.number().int().nonnegative(),
+  })).default({}),
+  guidedSessions: z.array(z.object({
+    id: z.string(),
+    problemId: z.string(),
+    mode: z.enum(['guided', 'blind', 'recognition', 'medium-trainer']),
+    startedAt: z.string(),
+    completedAt: z.string().nullable(),
+    hintLevelReached: hintLevelSchema,
+    recognizedPattern: z.boolean().nullable(),
+    bruteForceCaptured: z.boolean(),
+    understandingScore: z.number().min(0).max(100).nullable().default(null),
+    derivationScore: z.number().min(0).max(100).nullable().default(null),
+    implementationCompleted: z.boolean(),
+    code: z.string().default(''),
+    codeScore: z.number().min(0).max(100).nullable().default(null),
+    explanation: z.string(),
+    explanationScore: nullableConfidenceSchema,
+    failureReason: failureReasonSchema.nullable(),
+    reflection: z.string(),
+  })).default([]),
+  recognitionAttempts: z.array(z.object({
+    id: z.string(),
+    problemId: z.string(),
+    selectedPattern: z.string(),
+    expectedPattern: z.string(),
+    correct: z.boolean(),
+    confidence: confidenceSchema,
+    createdAt: z.string(),
+  })).default([]),
+  mistakes: z.array(z.object({
+    id: z.string(),
+    problemId: z.string(),
+    category: failureReasonSchema,
+    note: z.string(),
+    createdAt: z.string(),
+    resolvedAt: z.string().nullable(),
+  })).default([]),
+  leetcodeProfile: z.object({
+    username: z.string(),
+    syncedAt: z.string(),
+    ranking: z.number().int().nonnegative().nullable(),
+    totalSolved: z.number().int().nonnegative(),
+    easySolved: z.number().int().nonnegative(),
+    mediumSolved: z.number().int().nonnegative(),
+    hardSolved: z.number().int().nonnegative(),
+    acceptanceRate: z.number().min(0).max(100).nullable(),
+    activeDays: z.number().int().nonnegative().nullable(),
+    maxStreak: z.number().int().nonnegative().nullable(),
+    primaryLanguage: z.string().nullable(),
+    matchedProblemIds: z.array(z.string()),
+    source: z.string(),
+  }).nullable().default(null),
+}).default({
+  displayName: 'Mithun',
+  onboardingComplete: false,
+  currentLevel: 1,
+  diagnostic: null,
+  yearPlanStartedAt: null,
+  completedPlanWeeks: [],
+  algorithmLab: {},
+  guidedSessions: [],
+  recognitionAttempts: [],
+  mistakes: [],
+  leetcodeProfile: null,
+})
+
 const appStateSchema = z.object({
-  version: z.union([z.literal(1), z.literal(2)]),
+  version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   progress: z.record(z.string(), progressSchema),
   attempts: z.array(attemptSchema),
   revisions: z.array(revisionSchema),
@@ -151,14 +262,25 @@ const appStateSchema = z.object({
     }),
   }),
   achievements: z.array(achievementSchema),
+  mentor: mentorSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
-}).transform((state): AppState => ({ ...state, version: 2 }))
+}).transform((state): AppState => {
+  const unlockedAtById = new Map(state.achievements.map((achievement) => [achievement.id, achievement.unlockedAt]))
+  return {
+    ...state,
+    version: 3,
+    achievements: createAchievements().map((achievement) => ({
+      ...achievement,
+      unlockedAt: unlockedAtById.get(achievement.id) ?? null,
+    })),
+  }
+})
 
 export function createInitialState(): AppState {
   const now = new Date().toISOString()
   return {
-    version: 2,
+    version: 3,
     progress: {},
     attempts: [],
     revisions: [],
@@ -181,6 +303,19 @@ export function createInitialState(): AppState {
       },
     },
     achievements: createAchievements(),
+    mentor: {
+      displayName: 'Mithun',
+      onboardingComplete: false,
+      currentLevel: 1,
+      diagnostic: null,
+      yearPlanStartedAt: null,
+      completedPlanWeeks: [],
+      algorithmLab: {},
+      guidedSessions: [],
+      recognitionAttempts: [],
+      mistakes: [],
+      leetcodeProfile: null,
+    },
     createdAt: now,
     updatedAt: now,
   }
@@ -206,6 +341,15 @@ export function loadState() {
   }
   const backup = parseState(localStorage.getItem(BACKUP_KEY))
   if (backup) return { state: backup, recovered: true }
+  const versionTwo = parseState(localStorage.getItem(LEGACY_V2_STORAGE_KEY))
+  if (versionTwo) return { state: versionTwo, recovered: false }
+  for (let index = 0; index < 10; index += 1) {
+    const legacyRotated = readLegacyBackup(index)
+    const valid = legacyRotated ? parseState(JSON.stringify(legacyRotated)) : null
+    if (valid) return { state: valid, recovered: true }
+  }
+  const versionTwoBackup = parseState(localStorage.getItem(LEGACY_V2_BACKUP_KEY))
+  if (versionTwoBackup) return { state: versionTwoBackup, recovered: true }
   const legacy = parseState(localStorage.getItem(LEGACY_STORAGE_KEY))
   if (legacy) return { state: legacy, recovered: false }
   const legacyBackup = parseState(localStorage.getItem(LEGACY_BACKUP_KEY))
@@ -237,6 +381,8 @@ export function serializeState(state: AppState) {
 export function clearStoredData() {
   localStorage.removeItem(STORAGE_KEY)
   localStorage.removeItem(BACKUP_KEY)
+  localStorage.removeItem(LEGACY_V2_STORAGE_KEY)
+  localStorage.removeItem(LEGACY_V2_BACKUP_KEY)
   localStorage.removeItem(LEGACY_STORAGE_KEY)
   localStorage.removeItem(LEGACY_BACKUP_KEY)
   clearBackups()
@@ -263,6 +409,10 @@ export function parseImportedState(value: string): AppState {
       ...session.problemIds,
       ...session.results.map((interviewResult) => interviewResult.problemId),
     ]),
+    ...result.data.mentor.guidedSessions.map((session) => session.problemId),
+    ...result.data.mentor.recognitionAttempts.map((attempt) => attempt.problemId),
+    ...result.data.mentor.mistakes.map((mistake) => mistake.problemId),
+    ...(result.data.mentor.leetcodeProfile?.matchedProblemIds ?? []),
   ].some((problemId) => !knownIds.has(problemId))
 
   if (hasUnknownProblem) throw new Error('This backup contains unknown roadmap problems.')

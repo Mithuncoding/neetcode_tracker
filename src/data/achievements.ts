@@ -15,6 +15,15 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, 'unlockedAt'>[] = [
   { id: 'first-hard', title: 'First Hard', description: 'Complete your first hard problem.' },
   { id: 'hard-10', title: 'Hard Problem Habit', description: 'Complete 10 hard problems.' },
   { id: 'revision-master', title: 'Revision Master', description: 'Complete 25 successful revisions.' },
+  { id: 'pattern-hunter', title: 'Pattern Hunter', description: 'Correctly identify 20 patterns before solving.' },
+  { id: 'pattern-master', title: 'Pattern Master', description: 'Solve five problems from one core pattern independently.' },
+  { id: 'recall-master', title: 'Recall Master', description: 'Complete 10 blind re-solves without hints.' },
+  { id: 'medium-breakthrough', title: 'Medium Breakthrough', description: 'Solve five Medium problems independently.' },
+  { id: 'explain-10', title: 'Clear Explainer', description: 'Give 10 explanations scoring at least 3/5.' },
+  { id: 'interview-ready', title: 'Interview Practice', description: 'Complete 10 scored mock interviews.' },
+  { id: 'visual-first', title: 'First Visual Model', description: 'Complete your first 3D algorithm lab.' },
+  { id: 'visual-10', title: 'Algorithm Cartographer', description: 'Complete 10 different 3D algorithm labs.' },
+  { id: 'visual-30', title: 'Visual Systems Thinker', description: 'Complete 30 different 3D algorithm labs.' },
 ]
 
 export function createAchievements(): Achievement[] {

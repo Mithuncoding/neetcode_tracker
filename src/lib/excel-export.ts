@@ -377,9 +377,14 @@ function addInterviewSheet(workbook: ExcelJS.Workbook, state: AppState) {
         resultProblem: problem?.title ?? '',
         resultOutcome: result?.outcome ?? '',
         resultDuration: result ? toExcelDuration(result.durationSeconds) : null,
+        understandingScore: result?.understandingScore ?? null,
+        patternRecognitionScore: result?.patternRecognitionScore ?? null,
+        approachScore: result?.approachScore ?? null,
         explanationScore: result?.explanationScore ?? null,
         codingScore: result?.codingScore ?? null,
+        complexityScore: result?.complexityScore ?? null,
         communicationScore: result?.communicationScore ?? null,
+        hintsUsed: result?.hintsUsed ?? null,
         notes: result?.notes ?? '',
         sessionId: session.id,
         plannedProblemIds: session.problemIds.join(', '),
@@ -397,14 +402,119 @@ function addInterviewSheet(workbook: ExcelJS.Workbook, state: AppState) {
     { header: 'Result Problem', key: 'resultProblem', width: 32 },
     { header: 'Outcome', key: 'resultOutcome', width: 16 },
     { header: 'Duration', key: 'resultDuration', width: 14, numFmt: '[h]:mm:ss' },
+    { header: 'Understanding', key: 'understandingScore', width: 14 },
+    { header: 'Pattern Recognition', key: 'patternRecognitionScore', width: 20 },
+    { header: 'Approach', key: 'approachScore', width: 11 },
     { header: 'Explanation', key: 'explanationScore', width: 12 },
     { header: 'Coding', key: 'codingScore', width: 10 },
+    { header: 'Complexity', key: 'complexityScore', width: 12 },
     { header: 'Communication', key: 'communicationScore', width: 15 },
+    { header: 'Hints Used', key: 'hintsUsed', width: 11 },
     { header: 'Notes', key: 'notes', width: 48 },
     { header: 'Interview ID', key: 'sessionId', width: 30 },
     { header: 'Planned Problem IDs', key: 'plannedProblemIds', width: 52 },
     { header: 'Result Problem ID', key: 'resultProblemId', width: 30 },
   ], rows)
+}
+
+function addMentorSessionSheet(workbook: ExcelJS.Workbook, state: AppState) {
+  return addDataSheet(workbook, 'Mentor Sessions', [
+    { header: 'Started At', key: 'startedAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Completed At', key: 'completedAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Problem', key: 'problem', width: 34 },
+    { header: 'Mode', key: 'mode', width: 18 },
+    { header: 'Hint Level', key: 'hintLevel', width: 12 },
+    { header: 'Recognized Pattern', key: 'recognizedPattern', width: 19 },
+    { header: 'Brute Force Captured', key: 'bruteForceCaptured', width: 20 },
+    { header: 'Understanding Score', key: 'understandingScore', width: 20 },
+    { header: 'Derivation Score', key: 'derivationScore', width: 17 },
+    { header: 'Implementation', key: 'implementation', width: 16 },
+    { header: 'Code Score', key: 'codeScore', width: 12 },
+    { header: 'Python Code', key: 'code', width: 72 },
+    { header: 'Explanation Score', key: 'explanationScore', width: 18 },
+    { header: 'Explanation', key: 'explanation', width: 56 },
+    { header: 'Failure Reason', key: 'failureReason', width: 22 },
+    { header: 'Reflection', key: 'reflection', width: 56 },
+    { header: 'Session ID', key: 'sessionId', width: 30 },
+    { header: 'Problem ID', key: 'problemId', width: 30 },
+  ], state.mentor.guidedSessions.map((session): ExportRow => ({
+    startedAt: toExcelDate(session.startedAt),
+    completedAt: toExcelDate(session.completedAt),
+    problem: problemFor(session.problemId)?.title ?? session.problemId,
+    mode: session.mode,
+    hintLevel: session.hintLevelReached,
+    recognizedPattern: session.recognizedPattern === null ? 'Not measured' : session.recognizedPattern ? 'Yes' : 'No',
+    bruteForceCaptured: session.bruteForceCaptured ? 'Yes' : 'No',
+    understandingScore: session.understandingScore,
+    derivationScore: session.derivationScore,
+    implementation: session.implementationCompleted ? 'Completed' : 'Blocked',
+    codeScore: session.codeScore,
+    code: session.code,
+    explanationScore: session.explanationScore,
+    explanation: session.explanation,
+    failureReason: session.failureReason ?? '',
+    reflection: session.reflection,
+    sessionId: session.id,
+    problemId: session.problemId,
+  })))
+}
+
+function addRecognitionSheet(workbook: ExcelJS.Workbook, state: AppState) {
+  return addDataSheet(workbook, 'Pattern Recognition', [
+    { header: 'Created At', key: 'createdAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Problem', key: 'problem', width: 34 },
+    { header: 'Selected Pattern', key: 'selectedPattern', width: 24 },
+    { header: 'Expected Pattern', key: 'expectedPattern', width: 24 },
+    { header: 'Correct', key: 'correct', width: 10 },
+    { header: 'Confidence', key: 'confidence', width: 12 },
+    { header: 'Attempt ID', key: 'attemptId', width: 30 },
+    { header: 'Problem ID', key: 'problemId', width: 30 },
+  ], state.mentor.recognitionAttempts.map((attempt): ExportRow => ({
+    createdAt: toExcelDate(attempt.createdAt),
+    problem: problemFor(attempt.problemId)?.title ?? attempt.problemId,
+    selectedPattern: attempt.selectedPattern,
+    expectedPattern: attempt.expectedPattern,
+    correct: attempt.correct ? 'Yes' : 'No',
+    confidence: attempt.confidence,
+    attemptId: attempt.id,
+    problemId: attempt.problemId,
+  })))
+}
+
+function addMistakeSheet(workbook: ExcelJS.Workbook, state: AppState) {
+  return addDataSheet(workbook, 'Mistake Memory', [
+    { header: 'Created At', key: 'createdAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Problem', key: 'problem', width: 34 },
+    { header: 'Category', key: 'category', width: 24 },
+    { header: 'Note', key: 'note', width: 64 },
+    { header: 'Resolved At', key: 'resolvedAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Mistake ID', key: 'mistakeId', width: 30 },
+    { header: 'Problem ID', key: 'problemId', width: 30 },
+  ], state.mentor.mistakes.map((mistake): ExportRow => ({
+    createdAt: toExcelDate(mistake.createdAt),
+    problem: problemFor(mistake.problemId)?.title ?? mistake.problemId,
+    category: mistake.category,
+    note: mistake.note,
+    resolvedAt: toExcelDate(mistake.resolvedAt),
+    mistakeId: mistake.id,
+    problemId: mistake.problemId,
+  })))
+}
+
+function addAlgorithmLabSheet(workbook: ExcelJS.Workbook, state: AppState) {
+  return addDataSheet(workbook, '3D Algorithm Lab', [
+    { header: 'Scene ID', key: 'sceneId', width: 28 },
+    { header: 'Completed At', key: 'completedAt', width: 20, numFmt: 'yyyy-mm-dd hh:mm' },
+    { header: 'Frames Viewed', key: 'framesViewed', width: 15 },
+    { header: 'Correct Predictions', key: 'correctPredictions', width: 20 },
+    { header: 'Total Predictions', key: 'totalPredictions', width: 18 },
+  ], Object.values(state.mentor.algorithmLab).map((record): ExportRow => ({
+    sceneId: record.sceneId,
+    completedAt: toExcelDate(record.completedAt),
+    framesViewed: record.framesViewed,
+    correctPredictions: record.correctPredictions,
+    totalPredictions: record.totalPredictions,
+  })))
 }
 
 function addAchievementSheet(workbook: ExcelJS.Workbook, state: AppState) {
@@ -448,6 +558,14 @@ function addSettingsSheet(workbook: ExcelJS.Workbook, state: AppState, exportedA
     { setting: 'Active timer problem', value: activeTimerProblem?.title ?? '' },
     { setting: 'Active timer elapsed', value: toExcelDuration(activeTimerSeconds) },
     { setting: 'Active timer running', value: state.activeTimer?.running ? 'Yes' : 'No' },
+    { setting: 'Mentor display name', value: state.mentor.displayName },
+    { setting: 'Mentor current level', value: state.mentor.currentLevel },
+    { setting: 'Mentor onboarding complete', value: state.mentor.onboardingComplete ? 'Yes' : 'No' },
+    { setting: 'One-year plan started at', value: toExcelDate(state.mentor.yearPlanStartedAt) },
+    { setting: 'Completed plan weeks', value: state.mentor.completedPlanWeeks.join(', ') },
+    { setting: 'LeetCode username', value: state.mentor.leetcodeProfile?.username ?? '' },
+    { setting: 'LeetCode profile synced at', value: toExcelDate(state.mentor.leetcodeProfile?.syncedAt ?? null) },
+    { setting: 'LeetCode public solved count', value: state.mentor.leetcodeProfile?.totalSolved ?? '' },
   ]
   const worksheet = addDataSheet(workbook, 'Settings', [
     { header: 'Setting', key: 'setting', width: 32 },
@@ -475,6 +593,10 @@ export function createTrackerWorkbook(state: AppState, exportedAt = new Date()) 
   addRevisionSheet(workbook, state)
   addSessionSheet(workbook, state)
   addInterviewSheet(workbook, state)
+  addMentorSessionSheet(workbook, state)
+  addRecognitionSheet(workbook, state)
+  addMistakeSheet(workbook, state)
+  addAlgorithmLabSheet(workbook, state)
   addAchievementSheet(workbook, state)
   addSettingsSheet(workbook, state, exportedAt)
   return workbook

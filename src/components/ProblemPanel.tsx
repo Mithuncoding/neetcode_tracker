@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Check, ExternalLink, Pause, Play, RotateCcw, Square, X } from 'lucide-react'
+import { BrainCircuit, Check, ExternalLink, LockKeyhole, Pause, Play, RotateCcw, Square, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useTracker } from '../context/useTracker'
 import { ROADMAP_PROBLEMS } from '../data/problems'
 import { getProblemProgress } from '../lib/analytics'
@@ -11,7 +12,8 @@ import { SolveForm } from './SolveForm'
 import { Button, DifficultyBadge, IconButton, StatusBadge } from './ui'
 
 export function ProblemPanel({ problemId, onClose }: { problemId: string | null; onClose: () => void }) {
-  const { state, quickSolve, setProblemStatus, setNotes, setRevisionDate, startTimer, pauseTimer, resumeTimer, cancelTimer, markRevision } = useTracker()
+  const { state, setProblemStatus, setNotes, setRevisionDate, startTimer, pauseTimer, resumeTimer, cancelTimer, markRevision } = useTracker()
+  const navigate = useNavigate()
   const problem = ROADMAP_PROBLEMS.find((item) => item.id === problemId)
   const progress = problem ? getProblemProgress(state, problem.id) : null
   const [logging, setLogging] = useState(false)
@@ -37,8 +39,8 @@ export function ProblemPanel({ problemId, onClose }: { problemId: string | null;
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-[var(--text-faint)]">#{problem.leetcodeNumber}</span><DifficultyBadge difficulty={problem.difficulty} /><StatusBadge status={progress.status} /></div>
             <h2 className="text-xl font-bold leading-7 text-[var(--text)]">{problem.title}</h2>
-            <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">{problem.topic}</p>
-            <div className="mt-2 flex flex-wrap gap-1">{problem.patterns.map((pattern) => <span key={pattern} className="rounded-[4px] bg-[var(--violet-soft)] px-2 py-1 text-[9px] font-bold text-[var(--violet)]">{pattern}</span>)}</div>
+            <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">{progress.solvedAt ? problem.topic : 'Learning mode'}</p>
+            <div className="mt-2 flex flex-wrap gap-1">{progress.solvedAt ? problem.patterns.map((pattern) => <span key={pattern} className="rounded-[4px] bg-[var(--violet-soft)] px-2 py-1 text-[9px] font-bold text-[var(--violet)]">{pattern}</span>) : <span className="flex items-center gap-1.5 rounded-[4px] bg-[var(--surface-muted)] px-2 py-1 text-[9px] font-bold text-[var(--text-faint)]"><LockKeyhole size={10} /> Pattern hidden until Mentor Hint 2</span>}</div>
           </div>
           <IconButton icon={X} label="Close problem details" onClick={onClose} />
         </header>
@@ -47,9 +49,13 @@ export function ProblemPanel({ problemId, onClose }: { problemId: string | null;
             <div><button type="button" onClick={() => setLogging(false)} className="mb-5 text-xs font-bold text-[var(--accent)] hover:underline">Back to problem</button><SolveForm problem={problem} onSaved={onClose} /></div>
           ) : (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-2">
-                <a href={problem.leetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-bold text-[var(--text)] hover:border-[var(--accent)]">LeetCode <ExternalLink size={14} /></a>
-                <a href={problem.neetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-bold text-[var(--text)] hover:border-[var(--accent)]">NeetCode <ExternalLink size={14} /></a>
+              <section className="rounded-[7px] border border-[var(--accent)] bg-[var(--accent-soft)] p-4">
+                <div className="flex items-start gap-3"><BrainCircuit size={19} className="mt-0.5 shrink-0 text-[var(--accent-strong)]" /><div><h3 className="text-sm font-bold text-[var(--accent-strong)]">Learn it, don&apos;t just log it</h3><p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">Restate the problem, derive brute force, commit a pattern guess, and reveal only the help you need.</p></div></div>
+                <Button className="mt-4 w-full" onClick={() => { onClose(); navigate(`/mentor/problem/${problem.id}`) }}><BrainCircuit size={16} /> Learn with Mentor</Button>
+              </section>
+              <div className={`grid gap-2 ${progress.solvedAt ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                <a href={problem.leetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-bold text-[var(--text)] hover:border-[var(--accent)]">Problem statement <ExternalLink size={14} /></a>
+                {progress.solvedAt && <a href={problem.neetcodeUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface)] text-xs font-bold text-[var(--text)] hover:border-[var(--accent)]">External explanation <ExternalLink size={14} /></a>}
               </div>
               <section className="panel-muted p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -63,7 +69,6 @@ export function ProblemPanel({ problemId, onClose }: { problemId: string | null;
                 </div>
                 {timer && <Button className="mt-4 w-full" onClick={() => setLogging(true)}><Check size={16} /> Finish and log</Button>}
               </section>
-              {!timer && !progress.solvedAt && <Button className="w-full" variant="secondary" onClick={() => { quickSolve(problem.id); onClose() }}><Check size={16} /> Mark solved in one click</Button>}
               <section>
                 <label className="mb-2 block text-xs font-bold uppercase text-[var(--text-faint)]" htmlFor="problem-status">Status</label>
                 <select id="problem-status" className="input px-3 text-sm" value={progress.status} onChange={(event) => setProblemStatus(problem.id, event.target.value as ProblemStatus)}>{PROBLEM_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select>

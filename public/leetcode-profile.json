@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "username": "Mithuncoding",
+  "generatedAt": "2026-09-01T20:17:01.440Z",
+  "ranking": 1793902,
+  "totalSolved": 90,
+  "easySolved": 76,
+  "mediumSolved": 13,
+  "hardSolved": 1,
+  "acceptanceRate": 68.75,
+  "activeDays": 43,
+  "maxStreak": 15,
+  "primaryLanguage": "Python3",
+  "recentAccepted": [
+    {
+      "title": "Two Sum",
+      "titleSlug": "two-sum",
+      "timestamp": "1788285836"
+    },
+    {
+      "title": "Reverse Integer",
+      "titleSlug": "reverse-integer",
+      "timestamp": "1788200662"
+    },
+    {
+      "title": "Palindrome Number",
+      "titleSlug": "palindrome-number",
+      "timestamp": "1788020265"
+    },
+    {
+      "title": "Contains Duplicate II",
+      "titleSlug": "contains-duplicate-ii",
+      "timestamp": "1787941737"
+    },
+    {
+      "title": "Contains Duplicate",
+      "titleSlug": "contains-duplicate",
+      "timestamp": "1787941111"
+    },
+    {
+      "title": "Concatenation of Array",
+      "titleSlug": "concatenation-of-array",
+      "timestamp": "1787940046"
+    },
+    {
+      "title": "Two Sum",
+      "titleSlug": "two-sum",
+      "timestamp": "1787855347"
+    },
+    {
+      "title": "Top K Frequent Elements",
+      "titleSlug": "top-k-frequent-elements",
+      "timestamp": "1787764634"
+    },
+    {
+      "title": "Sort Colors",
+      "titleSlug": "sort-colors",
+      "timestamp": "1787682576"
+    },
+    {
+      "title": "Sort an Array",
+      "titleSlug": "sort-an-array",
+      "timestamp": "1787680061"
+    },
+    {
+      "title": "Group Anagrams",
+      "titleSlug": "group-anagrams",
+      "timestamp": "1787582946"
+    },
+    {
+      "title": "Palindrome Number",
+      "titleSlug": "palindrome-number",
+      "timestamp": "1786450761"
+    },
+    {
+      "title": "Longest Common Prefix",
+      "titleSlug": "longest-common-prefix",
+      "timestamp": "1786216139"
+    },
+    {
+      "title": "Two Sum",
+      "titleSlug": "two-sum",
+      "timestamp": "1786004633"
+    },
+    {
+      "title": "Valid Anagram",
+      "titleSlug": "valid-anagram",
+      "timestamp": "1786004001"
+    },
+    {
+      "title": "Contains Duplicate",
+      "titleSlug": "contains-duplicate",
+      "timestamp": "1785832895"
+    },
+    {
+      "title": "Concatenation of Array",
+      "titleSlug": "concatenation-of-array",
+      "timestamp": "1785832665"
+    },
+    {
+      "title": "Two Sum",
+      "titleSlug": "two-sum",
+      "timestamp": "1785409636"
+    },
+    {
+      "title": "Contains Duplicate",
+      "titleSlug": "contains-duplicate",
+      "timestamp": "1784869739"
+    },
+    {
+      "title": "Concatenation of Array",
+      "titleSlug": "concatenation-of-array",
+      "timestamp": "1784869407"
+    }
+  ],
+  "source": "https://leetcode.com/u/Mithuncoding/"
+}

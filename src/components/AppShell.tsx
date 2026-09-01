@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Award, BarChart3, BriefcaseBusiness, CalendarDays, CalendarRange, CheckCircle2, CircleDot, Clock3, Command, Focus, LayoutDashboard, ListChecks, Menu, Search, Settings, Shapes, Undo2, X } from 'lucide-react'
+import { Award, BarChart3, Box, BrainCircuit, BriefcaseBusiness, CalendarDays, CalendarRange, CheckCircle2, CircleDot, Clock3, Command, Focus, LayoutDashboard, ListChecks, Menu, Search, Settings, Shapes, Undo2, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate, type NavigateFunction } from 'react-router-dom'
 import { useTracker } from '../context/useTracker'
 import { ROADMAP_PROBLEMS } from '../data/problems'
@@ -11,6 +11,8 @@ import { useDialogFocus } from '../hooks/useDialogFocus'
 
 const NAVIGATION = [
   { to: '/', label: 'Today', icon: LayoutDashboard, shortcut: 'D' },
+  { to: '/mentor', label: 'Mentor', icon: BrainCircuit, shortcut: 'M' },
+  { to: '/mentor/lab', label: '3D Lab', icon: Box, shortcut: 'V' },
   { to: '/plan', label: 'Study plan', icon: CalendarRange },
   { to: '/problems', label: 'Problems', icon: ListChecks },
   { to: '/topics', label: 'Topics', icon: Shapes },
@@ -26,6 +28,8 @@ export interface WorkspaceOutletContext {
 
 function goToShortcut(key: string, navigate: NavigateFunction) {
   if (key === 'd') navigate('/')
+  if (key === 'm') navigate('/mentor')
+  if (key === 'v') navigate('/mentor/lab')
   if (key === 'r') navigate('/revision')
   if (key === 'f') navigate('/focus')
 }
@@ -87,12 +91,12 @@ export function AppShell() {
       <aside className="sidebar">
         <div className="flex h-[72px] items-center gap-3 border-b border-[var(--border)] px-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-[var(--text)] text-[var(--surface)]"><CircleDot size={19} strokeWidth={2.2} /></div>
-          <div><p className="text-sm font-extrabold leading-tight">NeetCode 250</p><p className="mt-0.5 text-[10px] font-bold uppercase text-[var(--text-faint)]">Tracker</p></div>
+          <div><p className="text-sm font-extrabold leading-tight">NeetCode 250</p><p className="mt-0.5 text-[10px] font-bold uppercase text-[var(--text-faint)]">DSA Academy</p></div>
         </div>
         <div className="px-3 py-4"><button type="button" onClick={() => setSearchOpen(true)} className="flex h-10 w-full items-center gap-2 rounded-[6px] border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-xs font-semibold text-[var(--text-muted)] hover:border-[var(--border-strong)]"><Search size={15} /><span className="flex-1 text-left">Search</span><kbd className="rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[9px]">/</kbd></button></div>
         <nav className="flex-1 space-y-1 px-3" aria-label="Main navigation">
           {NAVIGATION.map(({ to, label, icon: Icon, shortcut }) => (
-            <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => cn('flex h-10 items-center gap-3 rounded-[6px] px-3 text-xs font-semibold transition-colors', isActive ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]')}>
+            <NavLink key={to} to={to} end={to === '/' || to === '/mentor'} className={({ isActive }) => cn('flex h-10 items-center gap-3 rounded-[6px] px-3 text-xs font-semibold transition-colors', isActive ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]')}>
               <Icon size={17} strokeWidth={1.8} /><span className="flex-1">{label}</span>{label === 'Revision' && due > 0 && <span className="metric-number rounded-full bg-[var(--red)] px-1.5 py-0.5 text-[9px] font-bold text-white">{due}</span>}{shortcut && <span className="font-mono text-[9px] text-[var(--text-faint)]">{shortcut}</span>}
             </NavLink>
           ))}
@@ -106,13 +110,13 @@ export function AppShell() {
       </aside>
       <main className="min-w-0">
         {(recoveredFromBackup || !storageHealthy) && <Notice tone={storageHealthy ? 'warning' : 'danger'}>{storageHealthy ? 'The primary save was invalid, so your latest valid backup was restored.' : 'Progress could not be saved. Export a backup before closing this tab.'}</Notice>}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 backdrop-blur-md min-[901px]:hidden"><div className="flex items-center gap-2 text-sm font-extrabold"><CircleDot size={18} /> NeetCode 250</div><div className="flex gap-1"><IconButton icon={Search} label="Search problems" onClick={() => setSearchOpen(true)} /><IconButton icon={Menu} label="Open workspace menu" onClick={() => setMobileMenuOpen(true)} /></div></header>
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 backdrop-blur-md min-[901px]:hidden"><div className="flex items-center gap-2 text-sm font-extrabold"><CircleDot size={18} /> DSA Academy</div><div className="flex gap-1"><IconButton icon={Search} label="Search problems" onClick={() => setSearchOpen(true)} /><IconButton icon={Menu} label="Open workspace menu" onClick={() => setMobileMenuOpen(true)} /></div></header>
         <Outlet context={{ openProblem } satisfies WorkspaceOutletContext} />
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[68px] grid-cols-5 border-t border-[var(--border)] bg-[var(--surface)] px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md min-[901px]:hidden" aria-label="Mobile navigation">
         {[
           { to: '/', label: 'Today', icon: LayoutDashboard, badge: 0 },
-          { to: '/problems', label: 'Problems', icon: ListChecks, badge: 0 },
+          { to: '/mentor', label: 'Mentor', icon: BrainCircuit, badge: 0 },
           { to: '/focus', label: 'Focus', icon: Focus, badge: 0 },
           { to: '/revision', label: 'Revision', icon: Clock3, badge: due },
         ].map(({ to, label, icon: Icon, badge }) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => cn('relative flex flex-col items-center justify-center gap-1 rounded-[8px] text-[9px] font-bold transition-colors active:scale-95', isActive ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]')}>{({ isActive }) => (<><span className={cn('absolute top-1.5 h-1 w-1 rounded-full bg-[var(--accent)] transition-opacity', isActive ? 'opacity-100' : 'opacity-0')} /><span className="relative"><Icon size={19} strokeWidth={1.8} />{badge > 0 && <span className="metric-number absolute -right-2.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--red)] px-1 text-[8px] font-bold text-white">{badge}</span>}</span>{label}</>)}</NavLink>)}

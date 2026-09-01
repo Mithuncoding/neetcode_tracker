@@ -17,9 +17,14 @@ function session(score: 1 | 2 | 3 | 4 | 5, startedAt: string): InterviewSession 
       problemId: '0049-group-anagrams',
       durationSeconds: 1800,
       outcome: 'independent',
+      understandingScore: score,
+      patternRecognitionScore: score,
+      approachScore: score,
       codingScore: score,
+      complexityScore: score,
       explanationScore: score,
       communicationScore: score,
+      hintsUsed: 0,
       notes: '',
     }],
   }
@@ -47,10 +52,17 @@ describe('interview readiness', () => {
     expect(selected.map((problem) => problem.id)).not.toContain(first.id)
   })
 
-  it('combines coding, explanation, communication, and independence', () => {
+  it('combines the full interview rubric and no-hint independence', () => {
     const result = getInterviewSessionScore(session(4, '2026-08-20T00:00:00.000Z'))
-    expect(result.overall).toBe(83)
+    expect(result.overall).toBe(82)
     expect(result.independentRate).toBe(100)
+    expect(result.patternRecognition).toBe(4)
+  })
+
+  it('does not count a hinted result as independent', () => {
+    const hinted = session(4, '2026-08-20T00:00:00.000Z')
+    hinted.results[0].hintsUsed = 1
+    expect(getInterviewSessionScore(hinted).independentRate).toBe(0)
   })
 
   it('reports readiness trend across recent mocks', () => {

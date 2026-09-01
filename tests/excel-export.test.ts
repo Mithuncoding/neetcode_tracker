@@ -78,14 +78,54 @@ describe('Excel tracker export', () => {
         problemId: '0001-two-sum',
         durationSeconds: 1_200,
         outcome: 'independent',
+        understandingScore: 4,
+        patternRecognitionScore: 4,
+        approachScore: 4,
         explanationScore: 4,
         codingScore: 5,
+        complexityScore: 4,
         communicationScore: 4,
+        hintsUsed: 0,
         notes: 'Explain complexity before coding.',
       }],
       status: 'completed',
     })
     state.achievements[0].unlockedAt = '2026-08-23T10:30:00.000Z'
+    state.mentor.guidedSessions.push({
+      id: 'guided-1',
+      problemId: '0001-two-sum',
+      mode: 'guided',
+      startedAt: '2026-08-23T10:00:00.000Z',
+      completedAt: '2026-08-23T10:30:00.000Z',
+      hintLevelReached: 1,
+      recognizedPattern: true,
+      bruteForceCaptured: true,
+      understandingScore: 75,
+      derivationScore: 75,
+      implementationCompleted: true,
+      code: 'def two_sum(nums, target): return []',
+      codeScore: 75,
+      explanation: 'Store complements in a dictionary.',
+      explanationScore: 3,
+      failureReason: null,
+      reflection: 'Needed the key observation.',
+    })
+    state.mentor.recognitionAttempts.push({
+      id: 'recognition-1',
+      problemId: '0001-two-sum',
+      selectedPattern: 'Arrays & Hashing',
+      expectedPattern: 'Arrays & Hashing',
+      correct: true,
+      confidence: 4,
+      createdAt: '2026-08-23T09:59:00.000Z',
+    })
+    state.mentor.algorithmLab['binary-search'] = {
+      sceneId: 'binary-search',
+      completedAt: '2026-08-24T11:00:00.000Z',
+      framesViewed: 4,
+      correctPredictions: 1,
+      totalPredictions: 1,
+    }
 
     const workbook = createTrackerWorkbook(state, new Date('2026-08-24T12:00:00.000Z'))
     const buffer = await workbook.xlsx.writeBuffer()
@@ -99,6 +139,10 @@ describe('Excel tracker export', () => {
       'Revisions',
       'Study Sessions',
       'Interviews',
+      'Mentor Sessions',
+      'Pattern Recognition',
+      'Mistake Memory',
+      '3D Algorithm Lab',
       'Achievements',
       'Settings',
     ])
@@ -126,6 +170,13 @@ describe('Excel tracker export', () => {
     const interviews = loaded.getWorksheet('Interviews')
     expect(valueUnderHeading(interviews!, 2, 'Result Problem')).toBe('Two Sum')
     expect(valueUnderHeading(interviews!, 2, 'Notes')).toBe('Explain complexity before coding.')
+
+    const mentorSessions = loaded.getWorksheet('Mentor Sessions')
+    expect(valueUnderHeading(mentorSessions!, 2, 'Problem')).toBe('Two Sum')
+    expect(valueUnderHeading(mentorSessions!, 2, 'Hint Level')).toBe(1)
+
+    const recognition = loaded.getWorksheet('Pattern Recognition')
+    expect(valueUnderHeading(recognition!, 2, 'Expected Pattern')).toBe('Arrays & Hashing')
 
     const achievements = loaded.getWorksheet('Achievements')
     expect(valueUnderHeading(achievements!, 2, 'Status')).toBe('Unlocked')

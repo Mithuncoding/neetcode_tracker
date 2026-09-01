@@ -140,6 +140,7 @@ textarea {
 }
 
 .panel {
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--surface);
