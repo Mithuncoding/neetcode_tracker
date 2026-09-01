@@ -14,11 +14,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['app-icon.svg'],
       manifest: {
-        name: "Mithun's Interview Studio",
-        short_name: 'Interview Studio',
-        description: 'A personal system for LeetCode sessions, pattern recognition, Python fluency, recall, and interview readiness.',
-        theme_color: '#191b1e',
-        background_color: '#f4f5f7',
+        name: 'Mithun DSA Academy',
+        short_name: 'DSA Academy',
+        description: 'An offline-first personal DSA mentor, curriculum, and mastery tracker.',
+        theme_color: '#17231c',
+        background_color: '#f3f6f3',
         display: 'standalone',
         start_url: '.',
         icons: [

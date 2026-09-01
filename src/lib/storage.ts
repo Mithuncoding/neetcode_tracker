@@ -69,8 +69,6 @@ const attemptSchema = z.object({
   notes: z.string(),
   revisionNeeded: z.boolean(),
   sessionId: z.string().nullable(),
-  patternGuess: z.string().nullable().default(null),
-  patternCorrect: z.boolean().nullable().default(null),
 })
 const revisionSchema = z.object({
   id: z.string(),
@@ -409,7 +407,7 @@ export function parseImportedState(value: string): AppState {
   }
 
   const result = appStateSchema.safeParse(parsed)
-  if (!result.success) throw new Error("This backup is not a valid Mithun's Interview Studio export.")
+  if (!result.success) throw new Error('This backup is not a valid NeetCode 250 Tracker export.')
 
   const knownIds = new Set(ROADMAP_PROBLEMS.map((problem) => problem.id))
   const hasUnknownProblem = [

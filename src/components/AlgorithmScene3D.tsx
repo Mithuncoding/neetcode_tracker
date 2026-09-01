@@ -10,31 +10,31 @@ import type {
 } from '../data/algorithm-scenes'
 
 const STATE_COLORS: Record<SceneEntityState, string> = {
-  idle: '#7d848e',
-  active: '#ff745e',
-  compare: '#efb14f',
-  candidate: '#77adf5',
-  pivot: '#bda0ee',
-  frontier: '#5e9ce6',
-  visited: '#55c5a0',
+  idle: '#7f9187',
+  active: '#4ec08c',
+  compare: '#f0ac4f',
+  candidate: '#72b7e7',
+  pivot: '#b59ada',
+  frontier: '#58aee2',
+  visited: '#58c493',
   path: '#f1c65b',
-  done: '#86dbbe',
-  muted: '#292d33',
-  bad: '#f17d88',
+  done: '#70d7a5',
+  muted: '#28342d',
+  bad: '#ec7d7d',
 }
 
 const FALLBACK_STYLES: Record<SceneEntityState, string> = {
   idle: 'border-white/15 bg-white/5 text-white/55',
-  active: 'border-[#ff745e] bg-[#3b2421] text-[#ffb3a5]',
-  compare: 'border-[#efb14f] bg-[#3a2d19] text-[#f6cf8e]',
-  candidate: 'border-[#77adf5] bg-[#1d3048] text-[#b9d6ff]',
-  pivot: 'border-[#bda0ee] bg-[#312742] text-[#dbc8fb]',
-  frontier: 'border-[#5e9ce6] bg-[#1d3048] text-[#b9d6ff]',
-  visited: 'border-[#55c5a0] bg-[#19352d] text-[#a8e6d1]',
+  active: 'border-[#4ec08c] bg-[#17392b] text-[#a4e7c5]',
+  compare: 'border-[#f0ac4f] bg-[#3a2a16] text-[#f4c778]',
+  candidate: 'border-[#72b7e7] bg-[#1d3242] text-[#a9d8fa]',
+  pivot: 'border-[#b59ada] bg-[#302842] text-[#d4c4ef]',
+  frontier: 'border-[#58aee2] bg-[#1d3242] text-[#a9d8fa]',
+  visited: 'border-[#58c493] bg-[#17392b] text-[#a4e7c5]',
   path: 'border-[#f1c65b] bg-[#3a2a16] text-[#f4d77d]',
-  done: 'border-[#86dbbe] bg-[#19352d] text-[#bcefdc]',
+  done: 'border-[#70d7a5] bg-[#17392b] text-[#b5efd0]',
   muted: 'border-white/5 bg-white/[.025] text-white/20',
-  bad: 'border-[#f17d88] bg-[#402327] text-[#ffc0c6]',
+  bad: 'border-[#ec7d7d] bg-[#422222] text-[#ffb0b0]',
 }
 
 interface EntityObject {
@@ -84,7 +84,7 @@ function labelTexture(text: string) {
   const context = canvas.getContext('2d')
   if (!context) return new THREE.CanvasTexture(canvas)
   context.clearRect(0, 0, canvas.width, canvas.height)
-  context.fillStyle = 'rgba(13, 14, 16, 0.82)'
+  context.fillStyle = 'rgba(7, 14, 10, 0.78)'
   context.beginPath()
   context.roundRect(6, 8, canvas.width - 12, canvas.height - 16, 18)
   context.fill()
@@ -295,9 +295,9 @@ function canCreateWebGLContext() {
 
 function WebGLFallback({ frame }: { frame: AlgorithmFrame }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center overflow-auto bg-[#0d0e10] p-5" data-render-fallback="true">
+    <div className="flex h-full flex-col items-center justify-center overflow-auto bg-[#08110c] p-5" data-render-fallback="true">
       <div className="w-full max-w-3xl rounded-[7px] border border-white/10 bg-white/[.035] p-4">
-        <div className="flex items-center justify-between gap-3"><p className="text-[10px] font-extrabold uppercase text-[#ff9a87]">Accessible state map</p><span className="rounded-[4px] bg-white/5 px-2 py-1 text-[9px] font-bold text-white/35">WebGL unavailable</span></div>
+        <div className="flex items-center justify-between gap-3"><p className="text-[10px] font-extrabold uppercase text-[#74d6a8]">Accessible state map</p><span className="rounded-[4px] bg-white/5 px-2 py-1 text-[9px] font-bold text-white/35">WebGL unavailable</span></div>
         <div className="mt-4 flex min-h-40 flex-wrap items-center justify-center gap-3">{frame.entities.map((entity) => <div key={entity.id} className={`flex min-h-14 min-w-14 items-center justify-center rounded-[6px] border px-3 py-2 font-mono text-xs font-bold ${FALLBACK_STYLES[entity.state]}`}>{entity.label}</div>)}</div>
         {frame.edges.length > 0 && <div className="mt-4 flex flex-wrap justify-center gap-2 border-t border-white/10 pt-4">{frame.edges.map((sceneEdge) => <span key={sceneEdge.id} className="font-mono text-[9px] text-white/35">{sceneEdge.from.replace('node-', '')} {sceneEdge.directed ? '→' : '—'} {sceneEdge.to.replace('node-', '')}</span>)}</div>}
         <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/45">The same playback, prediction, code, and invariant controls remain active. Enable hardware acceleration for the spatial 3D view.</p>
@@ -317,8 +317,8 @@ export function AlgorithmScene3D({ frame, sceneId }: { frame: AlgorithmFrame; sc
     if (!container) return
     const initialFrame = initialFrameRef.current
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#0d0e10')
-    scene.fog = new THREE.Fog('#0d0e10', 13, 28)
+    scene.background = new THREE.Color('#08110c')
+    scene.fog = new THREE.Fog('#08110c', 13, 28)
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100)
     const baseCamera = initialFrame.camera ?? [0, 3.5, 10]
     camera.position.set(...baseCamera)
@@ -336,24 +336,24 @@ export function AlgorithmScene3D({ frame, sceneId }: { frame: AlgorithmFrame; sc
     controls.maxDistance = 20
     controls.maxPolarAngle = Math.PI * 0.78
 
-    scene.add(new THREE.HemisphereLight('#eaf2ff', '#19151a', 2.1))
+    scene.add(new THREE.HemisphereLight('#d9fff0', '#102219', 2.1))
     const keyLight = new THREE.DirectionalLight('#ffffff', 3.2)
     keyLight.position.set(5, 9, 7)
     keyLight.castShadow = true
     keyLight.shadow.mapSize.set(1024, 1024)
     scene.add(keyLight)
-    const accentLight = new THREE.PointLight('#ff745e', 16, 18, 2)
+    const accentLight = new THREE.PointLight('#4ec08c', 16, 18, 2)
     accentLight.position.set(-5, 2, 4)
     scene.add(accentLight)
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(30, 22),
-      new THREE.MeshStandardMaterial({ color: '#17191d', roughness: 0.9, metalness: 0.04 }),
+      new THREE.MeshStandardMaterial({ color: '#0d1a12', roughness: 0.9, metalness: 0.04 }),
     )
     floor.rotation.x = -Math.PI / 2
     floor.position.y = -1.72
     floor.receiveShadow = true
     scene.add(floor)
-    const grid = new THREE.GridHelper(24, 24, '#49302c', '#25282e')
+    const grid = new THREE.GridHelper(24, 24, '#214b35', '#132b1e')
     grid.position.y = -1.7
     scene.add(grid)
 

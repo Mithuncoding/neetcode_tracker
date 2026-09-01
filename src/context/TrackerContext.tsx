@@ -22,7 +22,6 @@ import {
 } from '../lib/utils'
 import { advanceRevision, scheduleInitialReview } from '../lib/spaced-repetition'
 import { selectInterviewProblems } from '../lib/interview'
-import { fetchLeetCodeProfile, LEETCODE_SYNC_DATE_KEY, LEETCODE_USERNAME } from '../lib/leetcode'
 import type {
   AppState,
   ProblemStatus,
@@ -425,8 +424,6 @@ function reducer(state: AppState, action: Action): AppState {
       notes: payload.notes.trim(),
       revisionNeeded: payload.revisionNeeded,
       sessionId: payload.sessionId ?? null,
-      patternGuess: payload.patternGuess ?? null,
-      patternCorrect: payload.patternCorrect ?? null,
     }
     const progress = {
       ...current,
@@ -777,17 +774,6 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveState(state)
   }, [state])
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    if (localStorage.getItem(LEETCODE_SYNC_DATE_KEY) === today) return
-    fetchLeetCodeProfile(LEETCODE_USERNAME, ROADMAP_PROBLEMS)
-      .then((profile) => {
-        dispatch({ type: 'save-leetcode-profile', profile, now: new Date().toISOString() })
-        localStorage.setItem(LEETCODE_SYNC_DATE_KEY, today)
-      })
-      .catch(() => localStorage.removeItem(LEETCODE_SYNC_DATE_KEY))
-  }, [])
 
   useEffect(() => {
     if (!undoEntry) return

@@ -40,7 +40,7 @@ export function MediumTrainerPage() {
       <PageHeader title="Medium problem trainer" description="Earn the Medium attempt through a controlled pattern progression." actions={<Button variant="secondary" onClick={() => navigate('/mentor')}><ArrowLeft size={15} /> Mentor</Button>} />
 
       <section className="mb-4 grid gap-4 xl:grid-cols-[1.25fr_.75fr]">
-        <article className="panel border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] p-5 text-white sm:p-6">
+        <article className="panel bg-[#17231c] p-5 text-white sm:p-6">
           <Badge tone="amber">Current bridge pattern</Badge>
           <h2 className="mt-4 text-2xl font-bold text-white">{ladder.pattern}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">The Medium is not step one. First prove recognition, a simple implementation, and one variation. Then remove support.</p>

@@ -45,8 +45,6 @@ describe('Excel tracker export', () => {
       notes: 'Needed one hint.',
       revisionNeeded: true,
       sessionId: 'session-1',
-      patternGuess: 'Arrays & Hashing',
-      patternCorrect: true,
     })
     state.revisions.push({
       id: 'revision-1',
@@ -169,8 +167,6 @@ describe('Excel tracker export', () => {
     const attempts = loaded.getWorksheet('Attempts')
     expect(valueUnderHeading(attempts!, 2, 'Problem')).toBe('Two Sum')
     expect(valueUnderHeading(attempts!, 2, 'Notes')).toBe('Needed one hint.')
-    expect(valueUnderHeading(attempts!, 2, 'Pattern Guess')).toBe('Arrays & Hashing')
-    expect(valueUnderHeading(attempts!, 2, 'Pattern Correct')).toBe('Yes')
 
     const revisions = loaded.getWorksheet('Revisions')
     expect(valueUnderHeading(revisions!, 2, 'Problem')).toBe('Two Sum')

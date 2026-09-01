@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatDistanceToNow } from 'date-fns'
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,15 +11,16 @@ import {
   ChevronRight,
   Code2,
   Crosshair,
+  ExternalLink,
   Gauge,
   HelpCircle,
   Network,
+  RefreshCw,
   Route,
   ScanSearch,
   Target,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { LeetCodeProfilePanel } from '../components/LeetCodeProfilePanel'
 import { Badge, Button, PageHeader, ProgressBar } from '../components/ui'
 import { useTracker } from '../context/useTracker'
 import {
@@ -28,6 +30,7 @@ import {
 } from '../data/mentor-content'
 import { ROADMAP_PROBLEMS } from '../data/problems'
 import { PYTHON_LESSONS, PYTHON_MODULES } from '../data/python-course'
+import { fetchLeetCodeProfile } from '../lib/leetcode'
 import {
   getDailyMentorMission,
   getMentorReadiness,
@@ -138,8 +141,10 @@ function SkillCard({ skill }: { skill: PatternMastery }) {
 }
 
 export function MentorPage() {
-  const { state, completeDiagnostic } = useTracker()
+  const { state, completeDiagnostic, saveLeetCodeProfile } = useTracker()
   const navigate = useNavigate()
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   if (!state.mentor.onboardingComplete) return <Diagnostic onComplete={completeDiagnostic} />
 
@@ -154,15 +159,29 @@ export function MentorPage() {
   const progression = getLevelProgression(state, ROADMAP_PROBLEMS)
   const level = progression.activeLevel
   const levelNodes = CURRICULUM.filter((node) => node.level === level)
+  const profile = state.mentor.leetcodeProfile
   const completedPythonLessons = PYTHON_LESSONS.filter((lesson) => state.mentor.pythonCourse[lesson.id]?.completedAt).length
   const nextPythonLesson = PYTHON_LESSONS.find((lesson) => !state.mentor.pythonCourse[lesson.id]?.completedAt)
 
+  const syncProfile = async () => {
+    setSyncing(true)
+    setSyncError(null)
+    try {
+      const snapshot = await fetchLeetCodeProfile('Mithuncoding', ROADMAP_PROBLEMS)
+      saveLeetCodeProfile(snapshot)
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : 'LeetCode sync failed.')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div className="page-content">
-      <PageHeader title="Coach" description="Diagnose the weakest skill, train it deliberately, then remove support." actions={<><Button variant="secondary" onClick={() => navigate('/mentor/recognition')}><ScanSearch size={16} /> Pattern sprint</Button><Button onClick={() => mission[0] && navigate(mission[0].route)}><Crosshair size={16} /> Start today&apos;s protocol</Button></>} />
+      <PageHeader title="Mentor" description="Your personal DSA academy: derive first, reveal later." actions={<><Button variant="secondary" onClick={() => navigate('/mentor/recognition')}><ScanSearch size={16} /> Recognition drill</Button><Button onClick={() => mission[2] && navigate(mission[2].route)}><Crosshair size={16} /> Start mission</Button></>} />
 
       <section className="mb-4 grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
-        <article className="panel relative overflow-hidden border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] p-5 text-white sm:p-6">
+        <article className="panel relative overflow-hidden bg-[#17231c] p-5 text-white sm:p-6">
           <div className="absolute right-5 top-5 font-mono text-[10px] font-bold opacity-45">MITHUN / LEVEL {level}</div>
           <Badge tone="green">Current training stage</Badge>
           <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-8 text-white">{LEVEL_NAMES[level]}</h2>
@@ -199,7 +218,12 @@ export function MentorPage() {
           <div className="divide-y divide-[var(--border)]">{mission.map((task, index) => <button key={task.id} type="button" onClick={() => navigate(task.route)} className="group flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-[var(--surface-raised)]"><span className="metric-number flex h-7 w-7 shrink-0 items-center justify-center rounded-[5px] bg-[var(--surface-muted)] font-mono text-[10px] font-bold">{String(index + 1).padStart(2, '0')}</span><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{task.label}</p><p className="mt-1 truncate text-[10px] text-[var(--text-faint)]">{task.detail}</p></div><ChevronRight size={15} className="shrink-0 text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" /></button>)}</div>
         </article>
 
-        <LeetCodeProfilePanel />
+        <article className="panel p-5">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase text-[var(--text-faint)]">LeetCode profile</p><h2 className="mt-1 text-sm font-bold">Mithuncoding</h2></div><Button size="sm" variant="secondary" onClick={syncProfile} disabled={syncing}><RefreshCw size={14} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Syncing' : 'Sync'}</Button></div>
+          {profile ? <><div className="mt-5 grid grid-cols-2 gap-3"><div><p className="metric-number text-2xl font-extrabold">{profile.totalSolved}</p><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Public solves</p></div><div><p className="metric-number text-2xl font-extrabold">{profile.mediumSolved}</p><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Medium</p></div><div><p className="metric-number text-lg font-bold">{profile.primaryLanguage?.replace('3', '') ?? '-'}</p><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Primary language</p></div><div><p className="metric-number text-lg font-bold">{profile.maxStreak ?? '-'}</p><p className="text-[10px] font-bold uppercase text-[var(--text-faint)]">Max streak</p></div></div><p className="mt-4 rounded-[6px] bg-[var(--amber-soft)] p-3 text-xs leading-5 text-[var(--amber)]">Imported solves prove exposure, not independent mastery. They do not raise your mentor score.</p><div className="mt-3 flex items-center justify-between text-[10px] text-[var(--text-faint)]"><span>Synced {formatDistanceToNow(new Date(profile.syncedAt), { addSuffix: true })}</span><a href={profile.source} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-bold text-[var(--accent)]">Open profile <ExternalLink size={11} /></a></div></> : <div className="mt-5 rounded-[6px] border border-dashed border-[var(--border-strong)] p-4 text-sm leading-6 text-[var(--text-muted)]">Sync the public profile snapshot to compare LeetCode exposure with measured in-app independence.</div>}
+          <button type="button" onClick={() => navigate('/mentor/leetcode')} className="mt-3 text-xs font-bold text-[var(--accent)]">Reconcile complete solved history</button>
+          {syncError && <p role="alert" className="mt-3 text-xs leading-5 text-[var(--red)]">{syncError}</p>}
+        </article>
       </section>
 
       <section className="mt-4">

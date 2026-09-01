@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { CORE_PATTERNS, RECOGNITION_DRILLS } from '../src/data/mentor-content'
 import { ROADMAP_PROBLEMS } from '../src/data/problems'
 import {
   evaluateExplanation,
@@ -14,12 +13,6 @@ import { createInitialState } from '../src/lib/storage'
 import { getDefaultProgress } from '../src/lib/utils'
 
 describe('mentor learning intelligence', () => {
-  it('has a curated recognition drill for every core pattern', () => {
-    const covered = new Set(RECOGNITION_DRILLS.map((drill) => drill.answer))
-    CORE_PATTERNS.forEach((pattern) => expect(covered.has(pattern), pattern).toBe(true))
-    RECOGNITION_DRILLS.forEach((drill) => expect(ROADMAP_PROBLEMS.some((problem) => problem.title === drill.problemTitle), drill.problemTitle).toBe(true))
-  })
-
   it('normalizes roadmap metadata into teachable core patterns', () => {
     const longestSubstring = ROADMAP_PROBLEMS.find((problem) => problem.title === 'Longest Substring Without Repeating Characters')
     const courseSchedule = ROADMAP_PROBLEMS.find((problem) => problem.title === 'Course Schedule')

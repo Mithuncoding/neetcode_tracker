@@ -26,8 +26,6 @@ export interface LogAttemptInput {
   durationSeconds?: number
   startedAt?: string
   sessionId?: string | null
-  patternGuess?: string | null
-  patternCorrect?: boolean | null
 }
 
 export interface MarkRevisionInput {
